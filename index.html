@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service &amp; Inspection Tracker</title>
+<style>
+  :root {
+    --bg-page: #f4f6f8;
+    --bg-header: #2c3e50;
+    --bg-panel: #ffffff;
+    --accent: #2980b9;
+    --accent-hover: #3498db;
+    --row-red: rgba(231,76,60,0.12);
+    --row-amber: rgba(243,156,18,0.15);
+    --row-green: rgba(39,174,96,0.15);
+    --text-primary: #2c3e50;
+    --text-secondary: #7f8c8d;
+    --text-on-dark: #ecf0f1;
+    --border: #dde3ea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-page); color: var(--text-primary); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  header { background: var(--bg-header); color: var(--text-on-dark); padding: 0 20px; height: 56px; display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+  header h1 { font-size: 17px; font-weight: 600; white-space: nowrap; }
+  .upload-btn { background: var(--accent); color: #fff; border: none; border-radius: 5px; padding: 7px 14px; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .upload-btn:hover { background: var(--accent-hover); }
+  #csv-input { display: none; }
+  .stats-bar { display: flex; gap: 16px; margin-left: auto; font-size: 12px; }
+  .stat { background: rgba(255,255,255,0.1); border-radius: 4px; padding: 4px 10px; text-align: center; }
+  .stat strong { display: block; font-size: 16px; font-weight: 700; }
+  .stat span { opacity: 0.75; }
+  #app { display: none; flex: 1; overflow: hidden; }
+  #depot-panel { width: 155px; min-width: 140px; background: var(--bg-panel); border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; padding: 10px 0; }
+  #depot-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); padding: 0 14px 8px; }
+  #depot-list { list-style: none; }
+  .depot-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; cursor: pointer; font-size: 13px; border-radius: 0 20px 20px 0; margin-right: 8px; transition: background 0.15s; }
+  .depot-item:hover { background: #eaf3fb; }
+  .depot-item.active { background: var(--accent); color: #fff; }
+  .depot-badge { font-size: 11px; background: rgba(0,0,0,0.12); border-radius: 10px; padding: 1px 7px; min-width: 22px; text-align: center; }
+  .depot-item.active .depot-badge { background: rgba(255,255,255,0.25); }
+  #content { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .table-card { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
+  .wo-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .wo-table th { background: #34495e; color: var(--text-on-dark); padding: 8px 10px; text-align: left; font-size: 12px; white-space: nowrap; }
+  .wo-table td { padding: 7px 10px; border-bottom: 1px solid #eaecef; white-space: nowrap; }
+  .wo-table tr:last-child td { border-bottom: none; }
+  .wo-table tbody tr:hover td { filter: brightness(0.96); }
+  .row-red td { background: var(--row-red); }
+  .row-amber td { background: var(--row-amber); }
+  .row-green td { background: var(--row-green); }
+  .days-col { font-weight: 600; text-align: right; }
+  .days-overdue { color: #c0392b; }
+  .days-today { color: #27ae60; }
+  .days-future { color: var(--text-secondary); font-weight: 400; }
+  .priority-vor { background: #e74c3c; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+  .empty-msg { text-align: center; padding: 28px; color: var(--text-secondary); font-size: 13px; }
+  #chart-section { flex-shrink: 0; }
+  .chart-card { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 12px 16px 8px; }
+  #workload-chart { display: block; width: 100%; }
+  #empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-secondary); }
+  #empty-state svg { opacity: 0.3; }
+  #empty-state p { font-size: 15px; }
+  #empty-state small { font-size: 12px; opacity: 0.7; }
+  .legend { display: flex; gap: 16px; justify-content: flex-end; font-size: 12px; margin-top: 4px; }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔧 Service &amp; Inspection Tracker</h1>
+  <label class="upload-btn" for="csv-input">📂 Upload CSV</label>
+  <input type="file" id="csv-input" accept=".csv,.txt">
+  <div class="stats-bar" id="stats-bar" style="display:none">
+    <div class="stat"><strong id="stat-total">0</strong><span>Total WOs</span></div>
+    <div class="stat"><strong id="stat-insp">0</strong><span>Inspections</span></div>
+    <div class="stat"><strong id="stat-svc">0</strong><span>Services</span></div>
+    <div class="stat" style="background:rgba(231,76,60,0.25)"><strong id="stat-overdue">0</strong><span>Overdue</span></div>
+  </div>
+</header>
+<div id="app">
+  <aside id="depot-panel">
+    <h3>Depots</h3>
+    <ul id="depot-list"></ul>
+  </aside>
+  <main id="content">
+    <section id="inspections-section">
+      <div class="section-title">Vehicle Inspections</div>
+      <div class="table-card"><div id="inspections-table-wrap"></div></div>
+    </section>
+    <section id="servicing-section">
+      <div class="section-title">Servicing</div>
+      <div class="table-card"><div id="servicing-table-wrap"></div></div>
+    </section>
+    <section id="chart-section">
+      <div class="section-title">Daily Workload</div>
+      <div class="chart-card">
+        <canvas id="workload-chart" height="240"></canvas>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-swatch" style="background:#3498db"></div>Inspections</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#e67e22"></div>Services</div>
+          <div class="legend-item"><div class="legend-swatch" style="background:#e74c3c;width:3px;border-radius:0"></div>Today</div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div id="empty-state">
+  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+  <p>Upload a CSV file to view work orders</p>
+  <small>Columns: Depot · Equipment · WO Number · Description · Status · Sched. Start Date</small>
+</div>
+<script>
+// ── Constants & State ────────────────────────────────────────────────────────
+const TODAY = new Date(new Date().toDateString());
+
+const state = {
+  allRows: [],
+  depots: [],
+  activeDepot: 'ALL'
+};
+
+// ── CSV Parser (RFC-4180) ────────────────────────────────────────────────────
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = '', inQ = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQ) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { cell += '"'; i++; }
+        else inQ = false;
+      } else { cell += c; }
+    } else {
+      if (c === '"') { inQ = true; }
+      else if (c === ',') { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') {
+        row.push(cell); cell = '';
+        if (row.some(v => v.trim())) rows.push(row);
+        row = [];
+        if (c === '\r' && text[i + 1] === '\n') i++;
+      } else { cell += c; }
+    }
+  }
+  if (cell || row.length) { row.push(cell); if (row.some(v => v.trim())) rows.push(row); }
+  return rows;
+}
+
+// ── Date Utilities ───────────────────────────────────────────────────────────
+function parseDMY(s) {
+  if (!s) return null;
+  const m = String(s).trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const d = new Date(+m[3], +m[2] - 1, +m[1]);
+  return isNaN(d) ? null : d;
+}
+
+function daysDiff(date) {
+  return Math.round((date - TODAY) / 86400000);
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return String(d.getDate()).padStart(2,'0') + '/' +
+    String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+}
+
+function isoKey(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+// ── Data Classification ──────────────────────────────────────────────────────
+function classifyType(desc) {
+  const d = (desc || '').toLowerCase();
+  if (d.includes('inspection')) return 'inspection';
+  if (d.includes('service'))   return 'service';
+  return 'other';
+}
+
+function getRowClass(diff) {
+  if (diff <= -3) return 'row-red';
+  if (diff <= -1) return 'row-amber';
+  if (diff === 0) return 'row-green';
+  return '';
+}
+
+function buildRow(cols) {
+  if (!cols || cols.length < 11) return null;
+  const schedDate = parseDMY(cols[10]);
+  if (!schedDate) return null;
+  const equipment = (cols[2] || '').trim();
+  if (!equipment) return null;
+  const diff = daysDiff(schedDate);
+  return {
+    depot:       (cols[1] || '').trim(),
+    equipment,
+    workOrder:   (cols[3] || '').trim(),
+    description: (cols[6] || '').trim(),
+    status:      (cols[7] || '').trim(),
+    priority:    (cols[8] || '').trim(),
+    schedDate,
+    diff,
+    rowClass:    getRowClass(diff),
+    type:        classifyType(cols[6])
+  };
+}
+// ── Summary Stats ────────────────────────────────────────────────────────────
+function updateSummaryStats(all, insp, svc) {
+  const overdue = all.filter(r => r.diff < 0).length;
+  document.getElementById('stat-total').textContent   = all.length;
+  document.getElementById('stat-insp').textContent    = insp.length;
+  document.getElementById('stat-svc').textContent     = svc.length;
+  document.getElementById('stat-overdue').textContent = overdue;
+  document.getElementById('stats-bar').style.display  = 'flex';
+}
+
+// ── Depot Panel ──────────────────────────────────────────────────────────────
+function renderDepotPanel(rows) {
+  const counts = {};
+  rows.forEach(r => { counts[r.depot] = (counts[r.depot] || 0) + 1; });
+  const depots = Object.keys(counts).sort((a, b) => +a - +b || a.localeCompare(b));
+  const list = document.getElementById('depot-list');
+
+  const allLi = document.createElement('li');
+  allLi.className = 'depot-item' + (state.activeDepot === 'ALL' ? ' active' : '');
+  allLi.dataset.depot = 'ALL';
+  allLi.innerHTML = '<span>All Depots</span><span class="depot-badge">' + rows.length + '</span>';
+  list.innerHTML = '';
+  list.appendChild(allLi);
+
+  depots.forEach(dep => {
+    const li = document.createElement('li');
+    li.className = 'depot-item' + (state.activeDepot === dep ? ' active' : '');
+    li.dataset.depot = dep;
+    li.innerHTML = '<span>' + dep + '</span><span class="depot-badge">' + counts[dep] + '</span>';
+    list.appendChild(li);
+  });
+}
+
+// single delegated listener (attached once at init)
+function initDepotPanel() {
+  document.getElementById('depot-list').addEventListener('click', e => {
+    const item = e.target.closest('.depot-item');
+    if (!item) return;
+    state.activeDepot = item.dataset.depot;
+    document.querySelectorAll('.depot-item').forEach(el => el.classList.remove('active'));
+    item.classList.add('active');
+    applyFilter();
+  });
+}
+
+// ── Table Renderer ───────────────────────────────────────────────────────────
+function renderTable(container, rows, type) {
+  if (!rows.length) {
+    container.innerHTML = '<p class="empty-msg">No ' + (type === 'inspection' ? 'inspection' : 'service') + ' work orders found for this selection.</p>';
+    return;
+  }
+  const sorted = [...rows].sort((a, b) => a.diff - b.diff);
+  const html = ['<table class="wo-table"><thead><tr>',
+    '<th>Depot</th><th>Equipment</th><th>Work Order</th><th>Description</th>',
+    '<th>Status</th><th>Priority</th><th>Sched. Date</th><th>Days</th>',
+    '</tr></thead><tbody>'];
+
+  sorted.forEach(r => {
+    let daysText, daysClass;
+    if (r.diff < 0) {
+      daysText = r.diff + 'd'; daysClass = 'days-overdue';
+    } else if (r.diff === 0) {
+      daysText = 'Today'; daysClass = 'days-today';
+    } else {
+      daysText = '+' + r.diff + 'd'; daysClass = 'days-future';
+    }
+    const vor = r.priority.toUpperCase().includes('VOR') ?
+      '<span class="priority-vor">VOR</span> ' : '';
+    html.push(
+      '<tr class="' + r.rowClass + '">',
+      '<td>' + r.depot + '</td>',
+      '<td>' + r.equipment + '</td>',
+      '<td>' + r.workOrder + '</td>',
+      '<td>' + r.description + '</td>',
+      '<td>' + r.status + '</td>',
+      '<td>' + vor + r.priority.replace(/x\s*\(vor\)/i,'').trim() + '</td>',
+      '<td>' + fmtDate(r.schedDate) + '</td>',
+      '<td class="days-col ' + daysClass + '">' + daysText + '</td>',
+      '</tr>'
+    );
+  });
+  html.push('</tbody></table>');
+  container.innerHTML = html.join('');
+}
+
+// ── Filter Orchestrator ──────────────────────────────────────────────────────
+function applyFilter() {
+  const filtered = state.activeDepot === 'ALL'
+    ? state.allRows
+    : state.allRows.filter(r => r.depot === state.activeDepot);
+
+  const insp = filtered.filter(r => r.type === 'inspection');
+  const svc  = filtered.filter(r => r.type === 'service');
+
+  renderTable(document.getElementById('inspections-table-wrap'), insp, 'inspection');
+  renderTable(document.getElementById('servicing-table-wrap'),   svc,  'service');
+  renderChart(insp, svc);
+  updateSummaryStats(filtered, insp, svc);
+}
+
+// ── Upload Handler ───────────────────────────────────────────────────────────
+function initUpload() {
+  document.getElementById('csv-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const raw = parseCSV(ev.target.result);
+      const dataRows = raw.slice(1);
+      state.allRows = dataRows.map(buildRow).filter(Boolean);
+      state.depots  = [...new Set(state.allRows.map(r => r.depot))].sort();
+      state.activeDepot = 'ALL';
+      renderDepotPanel(state.allRows);
+      document.getElementById('empty-state').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+      applyFilter();
+    };
+    reader.readAsText(file);
+  });
+}
+// ── Chart Helpers ────────────────────────────────────────────────────────────
+function niceStep(max, ticks) {
+  const raw = max / ticks;
+  const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
+  return candidates.find(c => c >= raw) ?? Math.ceil(raw / 10) * 10;
+}
+
+function addDays(d, n) {
+  const r = new Date(d); r.setDate(r.getDate() + n); return r;
+}
+
+// ── Chart Renderer (Canvas) ──────────────────────────────────────────────────
+function renderChart(insp, svc) {
+  const canvas = document.getElementById('workload-chart');
+  const ctx    = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth - 32;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Build date range from data; pad ±2 days; always include today
+  const allDates = [...insp, ...svc].map(r => r.schedDate);
+  let minD = allDates.length ? new Date(Math.min(...allDates)) : addDays(TODAY, -3);
+  let maxD = allDates.length ? new Date(Math.max(...allDates)) : addDays(TODAY, 10);
+  minD = addDays(minD, -1);
+  maxD = addDays(maxD, 1);
+  if (TODAY < minD) minD = addDays(TODAY, -1);
+  if (TODAY > maxD) maxD = addDays(TODAY, 1);
+
+  // Build sorted date key array
+  const dates = [];
+  for (let d = new Date(minD); d <= maxD; d = addDays(d, 1)) {
+    dates.push(isoKey(d));
+  }
+  if (!dates.length) return;
+
+  // Aggregate counts
+  const counts = {};
+  dates.forEach(k => { counts[k] = { i: 0, s: 0 }; });
+  insp.forEach(r => { const k = isoKey(r.schedDate); if (counts[k]) counts[k].i++; });
+  svc.forEach(r =>  { const k = isoKey(r.schedDate); if (counts[k]) counts[k].s++; });
+  const maxCount = Math.max(...Object.values(counts).flatMap(v => [v.i, v.s]), 1);
+
+  // Layout
+  const PAD = { top: 30, right: 20, bottom: 56, left: 38 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top  - PAD.bottom;
+  const groupW = cW / dates.length;
+  const barW   = Math.max(3, Math.min(22, groupW * 0.36));
+  const gap    = Math.max(1, groupW * 0.05);
+
+  // Y gridlines & labels
+  const step  = niceStep(maxCount, 5);
+  const yTicks = Math.ceil(maxCount / step);
+  ctx.font = '11px system-ui';
+  ctx.fillStyle = '#95a5a6';
+  ctx.textAlign = 'right';
+  for (let t = 0; t <= yTicks; t++) {
+    const val = t * step;
+    const y = PAD.top + cH - (val / (yTicks * step)) * cH;
+    ctx.strokeStyle = '#ecf0f1';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
+    ctx.fillStyle = '#95a5a6';
+    ctx.fillText(val, PAD.left - 4, y + 4);
+  }
+
+  // Draw bars
+  dates.forEach((k, i) => {
+    const xGroup = PAD.left + i * groupW;
+    const xI = xGroup + groupW / 2 - barW - gap / 2;
+    const xS = xGroup + groupW / 2 + gap / 2;
+    const hI = (counts[k].i / (yTicks * step)) * cH;
+    const hS = (counts[k].s / (yTicks * step)) * cH;
+
+    if (hI > 0) {
+      ctx.fillStyle = '#3498db';
+      ctx.fillRect(xI, PAD.top + cH - hI, barW, hI);
+    }
+    if (hS > 0) {
+      ctx.fillStyle = '#e67e22';
+      ctx.fillRect(xS, PAD.top + cH - hS, barW, hS);
+    }
+
+    // Count labels above bars
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    if (counts[k].i > 0) {
+      ctx.fillStyle = '#2980b9';
+      ctx.fillText(counts[k].i, xI + barW / 2, PAD.top + cH - hI - 3);
+    }
+    if (counts[k].s > 0) {
+      ctx.fillStyle = '#d35400';
+      ctx.fillText(counts[k].s, xS + barW / 2, PAD.top + cH - hS - 3);
+    }
+  });
+
+  // X-axis labels (rotated DD/MM)
+  const showEvery = Math.max(1, Math.ceil(dates.length / 22));
+  ctx.font = '11px system-ui';
+  ctx.fillStyle = '#7f8c8d';
+  ctx.textAlign = 'right';
+  dates.forEach((k, i) => {
+    if (i % showEvery !== 0) return;
+    const x = PAD.left + i * groupW + groupW / 2;
+    const y = PAD.top + cH + 6;
+    const parts = k.split('-');
+    const label = parts[2] + '/' + parts[1];
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(-Math.PI / 4);
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+
+  // Today vertical dashed line
+  const todayKey = isoKey(TODAY);
+  const ti = dates.indexOf(todayKey);
+  if (ti >= 0) {
+    const tx = PAD.left + ti * groupW + groupW / 2;
+    ctx.strokeStyle = '#e74c3c';
+    ctx.setLineDash([4, 3]);
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(tx, PAD.top); ctx.lineTo(tx, PAD.top + cH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold 11px system-ui';
+    ctx.fillStyle = '#e74c3c';
+    ctx.textAlign = 'center';
+    ctx.fillText('Today', tx, PAD.top - 6);
+  }
+
+  // Axes
+  ctx.strokeStyle = '#bdc3c7';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(PAD.left, PAD.top);
+  ctx.lineTo(PAD.left, PAD.top + cH);
+  ctx.lineTo(PAD.left + cW, PAD.top + cH);
+  ctx.stroke();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  initUpload();
+  initDepotPanel();
+  window.addEventListener('resize', () => { if (state.allRows.length) applyFilter(); });
+});
+</script>
+</body>
+</html>
