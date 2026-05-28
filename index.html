@@ -348,25 +348,18 @@ function renderTable(container, rows, type) {
 }
 
 // ── Bus Timeline ─────────────────────────────────────────────────────────────
-function renderBusTimeline(busRows) {
-  // newest first
-  const sorted = [...busRows].sort((a, b) => b.schedDate - a.schedDate);
-  const firstRow = sorted[sorted.length - 1] || sorted[0];
-  document.getElementById('tl-bus-title').textContent =
-    'Fleet ' + state.selectedBus + ' · ' + (firstRow.regPlate || '—');
-  document.getElementById('tl-bus-sub').textContent =
-    'Depot ' + state.activeDepot + ' · ' + busRows.length + ' records';
+function renderTlSection(rows) {
   const html = [];
-  sorted.forEach((r, i) => {
+  rows.forEach((r, i) => {
     let dotClass;
-    if (r.dateCompleted)     dotClass = 'tl-dot-done';
-    else if (r.diff <= -3)   dotClass = 'tl-dot-red';
-    else if (r.diff <= -1)   dotClass = 'tl-dot-amber';
-    else if (r.diff === 0)   dotClass = 'tl-dot-green';
-    else                     dotClass = 'tl-dot-upcoming';
-    const next = sorted[i + 1];
-    const gap = next ? Math.abs(Math.round((r.schedDate - next.schedDate) / 86400000)) : null;
-    const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor" style="font-size:10px">VOR</span> ' : '';
+    if (r.dateCompleted)   dotClass = 'tl-dot-done';
+    else if (r.diff <= -3) dotClass = 'tl-dot-red';
+    else if (r.diff <= -1) dotClass = 'tl-dot-amber';
+    else if (r.diff === 0) dotClass = 'tl-dot-green';
+    else                   dotClass = 'tl-dot-upcoming';
+    const next = rows[i + 1];
+    const gap  = next ? Math.abs(Math.round((r.schedDate - next.schedDate) / 86400000)) : null;
+    const vor  = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor" style="font-size:10px">VOR</span> ' : '';
     html.push(
       '<div class="tl-event">',
       '  <div class="tl-dot-wrap"><div class="tl-dot ' + dotClass + '"></div>' + (gap !== null ? '<div class="tl-connector"></div>' : '') + '</div>',
@@ -374,16 +367,30 @@ function renderBusTimeline(busRows) {
       '    <div class="tl-date">' + fmtDate(r.schedDate) + '</div>',
       '    <div class="tl-desc">' + vor + r.description + '</div>',
       '    <div class="tl-meta">' + r.status +
-           (r.dateCompleted ? ' · <span class="tl-completed">✓ Completed ' + fmtDate(r.dateCompleted) + '</span>' : '') +
+           (r.dateCompleted ? ' · <span class="tl-completed">✓ ' + fmtDate(r.dateCompleted) + '</span>' : '') +
            (r.priority && !r.priority.toUpperCase().includes('VOR') ? ' · ' + r.priority : '') + '</div>',
       '  </div>',
       '</div>'
     );
-    if (gap !== null) {
-      html.push('<div class="tl-gap-label">▲ ' + gap + ' days</div>');
-    }
+    if (gap !== null) html.push('<div class="tl-gap-label">▲ ' + gap + ' days</div>');
   });
-  document.getElementById('tl-body').innerHTML = html.join('');
+  return html.join('');
+}
+
+function renderBusTimeline(busRows) {
+  const firstRow = busRows[0] || {};
+  document.getElementById('tl-bus-title').textContent =
+    'Fleet ' + state.selectedBus + ' · ' + (firstRow.regPlate || '—');
+  document.getElementById('tl-bus-sub').textContent =
+    'Depot ' + state.activeDepot + ' · ' + busRows.length + ' records';
+  const inspRows = [...busRows].filter(r => r.type === 'inspection').sort((a, b) => b.schedDate - a.schedDate);
+  const svcRows  = [...busRows].filter(r => r.type === 'service').sort((a, b) => b.schedDate - a.schedDate);
+  let html = '';
+  html += '<div class="section-title" style="margin-bottom:10px">Vehicle Inspections</div>';
+  html += inspRows.length ? renderTlSection(inspRows) : '<p class="empty-msg">No inspection records.</p>';
+  html += '<div class="section-title" style="margin-top:20px;margin-bottom:10px">Servicing</div>';
+  html += svcRows.length  ? renderTlSection(svcRows)  : '<p class="empty-msg">No service records.</p>';
+  document.getElementById('tl-body').innerHTML = html;
 }
 
 // ── Filter Orchestrator ──────────────────────────────────────────────────────
@@ -391,8 +398,8 @@ function applyFilter() {
   const filtered = state.activeDepot === 'ALL'
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
-  const insp = filtered.filter(r => r.type === 'inspection');
-  const svc  = filtered.filter(r => r.type === 'service');
+  const insp = filtered.filter(r => r.type === 'inspection' && !/review complete/i.test(r.status));
+  const svc  = filtered.filter(r => r.type === 'service'    && !/^(closed|cancelled)$/i.test(r.status));
   renderDepotPanel(state.allRows);
   renderBusPanel(filtered);
   if (state.selectedBus) {
