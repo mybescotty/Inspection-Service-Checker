@@ -146,6 +146,15 @@ function parseDMY(s) {
   return isNaN(d) ? null : d;
 }
 
+function parseFlexDate(v) {
+  if (!v) return null;
+  if (v instanceof Date) {
+    if (isNaN(v)) return null;
+    return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  }
+  return parseDMY(String(v));
+}
+
 function daysDiff(date) {
   return Math.round((date - TODAY) / 86400000);
 }
@@ -179,18 +188,18 @@ function getRowClass(diff) {
 
 function buildRow(cols) {
   if (!cols || cols.length < 11) return null;
-  const schedDate = parseDMY(cols[10]);
+  const schedDate = parseFlexDate(cols[10]);
   if (!schedDate) return null;
-  const equipment = (cols[2] || '').trim();
+  const equipment = String(cols[2] || '').trim();
   if (!equipment) return null;
   const diff = daysDiff(schedDate);
   return {
-    depot:       (cols[1] || '').trim(),
+    depot:       String(cols[1] || '').trim(),
     equipment,
-    workOrder:   (cols[3] || '').trim(),
-    description: (cols[6] || '').trim(),
-    status:      (cols[7] || '').trim(),
-    priority:    (cols[8] || '').trim(),
+    workOrder:   String(cols[3] || '').trim(),
+    description: String(cols[6] || '').trim(),
+    status:      String(cols[7] || '').trim(),
+    priority:    String(cols[8] || '').trim(),
     schedDate,
     diff,
     rowClass:    getRowClass(diff),
@@ -309,8 +318,9 @@ function showDiagnostics(wb, raw, accepted) {
       rejections.push({ row: i+2, reason: 'fewer than 11 columns (got ' + (cols ? cols.length : 0) + ')' });
     } else if (!(cols[2] || '').trim()) {
       rejections.push({ row: i+2, reason: 'col[2] Equipment is empty' });
-    } else if (!parseDMY(cols[10])) {
-      rejections.push({ row: i+2, reason: 'col[10] date "' + cols[10] + '" could not be parsed as DD/MM/YYYY' });
+    } else if (!parseFlexDate(cols[10])) {
+      const raw = cols[10] instanceof Date ? cols[10].toISOString() : String(cols[10]);
+      rejections.push({ row: i+2, reason: 'col[10] date "' + raw + '" could not be parsed' });
     }
   });
 
@@ -319,8 +329,8 @@ function showDiagnostics(wb, raw, accepted) {
     row: i+2,
     depot: cols[1] ?? '—',
     desc:  (cols[6] ?? '—').substring(0, 30),
-    rawDate: cols[10] ?? '—',
-    dateOk:  !!parseDMY(cols[10])
+    rawDate: cols[10] instanceof Date ? cols[10].toLocaleDateString('en-GB') : String(cols[10] ?? '—'),
+    dateOk:  !!parseFlexDate(cols[10])
   }));
 
   const dp = document.getElementById('diag-panel');
@@ -361,11 +371,9 @@ function initUpload() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = ev => {
-      const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+      const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json(ws, {
-        header: 1, defval: '', raw: false, dateNF: 'DD/MM/YYYY'
-      });
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
       const dataRows = raw.slice(1);
       state.allRows = dataRows.map(buildRow).filter(Boolean);
       state.depots  = [...new Set(state.allRows.map(r => r.depot))].sort();
