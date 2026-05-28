@@ -114,7 +114,8 @@
     <div class="stat"><strong id="stat-total">0</strong><span>Total WOs</span></div>
     <div class="stat"><strong id="stat-insp">0</strong><span>Inspections</span></div>
     <div class="stat"><strong id="stat-svc">0</strong><span>Services</span></div>
-    <div class="stat" style="background:rgba(231,76,60,0.25)"><strong id="stat-overdue">0</strong><span>Overdue</span></div>
+    <div class="stat" style="background:rgba(231,76,60,0.25)"><strong id="stat-insp-overdue">0</strong><span>Inspections Overdue</span></div>
+    <div class="stat" style="background:rgba(231,76,60,0.25)"><strong id="stat-svc-overdue">0</strong><span>Services Overdue</span></div>
   </div>
 </header>
 <div id="app">
@@ -244,11 +245,13 @@ function buildRow(cols) {
 
 // ── Summary Stats ────────────────────────────────────────────────────────────
 function updateSummaryStats(all, insp, svc) {
-  const overdue = [...insp, ...svc].filter(r => r.diff < 0).length;
-  document.getElementById('stat-total').textContent   = all.length;
-  document.getElementById('stat-insp').textContent    = insp.length;
-  document.getElementById('stat-svc').textContent     = svc.length;
-  document.getElementById('stat-overdue').textContent = overdue;
+  const inspOverdue = insp.filter(r => r.diff < 0).length;
+  const svcOverdue  = svc.filter(r => r.diff < 0).length;
+  document.getElementById('stat-total').textContent        = all.length;
+  document.getElementById('stat-insp').textContent         = insp.length;
+  document.getElementById('stat-svc').textContent          = svc.length;
+  document.getElementById('stat-insp-overdue').textContent = inspOverdue;
+  document.getElementById('stat-svc-overdue').textContent  = svcOverdue;
   document.getElementById('stats-bar').style.display  = 'flex';
 }
 
