@@ -67,6 +67,14 @@
   .legend { display: flex; gap: 16px; justify-content: flex-end; font-size: 12px; margin-top: 4px; }
   .legend-item { display: flex; align-items: center; gap: 5px; }
   .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  #diag-panel { background: #fef9e7; border-bottom: 2px solid #f39c12; padding: 10px 20px; font-size: 12px; font-family: monospace; display: none; max-height: 260px; overflow-y: auto; flex-shrink: 0; }
+  #diag-panel h4 { font-size: 13px; margin-bottom: 6px; color: #856404; }
+  #diag-panel table { border-collapse: collapse; width: 100%; margin-top: 6px; }
+  #diag-panel td, #diag-panel th { border: 1px solid #f0d060; padding: 3px 7px; text-align: left; vertical-align: top; }
+  #diag-panel th { background: #fde68a; }
+  .diag-close { float: right; cursor: pointer; font-size: 16px; line-height: 1; color: #856404; background: none; border: none; }
+  .diag-ok { color: #1a7a3a; font-weight: 600; }
+  .diag-err { color: #c0392b; font-weight: 600; }
 </style>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 </head>
@@ -82,6 +90,11 @@
     <div class="stat" style="background:rgba(231,76,60,0.25)"><strong id="stat-overdue">0</strong><span>Overdue</span></div>
   </div>
 </header>
+<div id="diag-panel">
+  <button class="diag-close" onclick="document.getElementById('diag-panel').style.display='none'">✕</button>
+  <h4>🔍 Upload Diagnostics</h4>
+  <div id="diag-content"></div>
+</div>
 <div id="app">
   <aside id="depot-panel">
     <h3>Depots</h3>
@@ -284,6 +297,63 @@ function applyFilter() {
   updateSummaryStats(filtered, insp, svc);
 }
 
+// ── Diagnostics ──────────────────────────────────────────────────────────────
+function showDiagnostics(wb, raw, accepted) {
+  const dataRows = raw.slice(1).filter(r => r.some(v => String(v).trim()));
+  const header   = raw[0] || [];
+
+  // Classify rejection reasons for first 10 data rows
+  const rejections = [];
+  dataRows.slice(0, 10).forEach((cols, i) => {
+    if (!cols || cols.length < 11) {
+      rejections.push({ row: i+2, reason: 'fewer than 11 columns (got ' + (cols ? cols.length : 0) + ')' });
+    } else if (!(cols[2] || '').trim()) {
+      rejections.push({ row: i+2, reason: 'col[2] Equipment is empty' });
+    } else if (!parseDMY(cols[10])) {
+      rejections.push({ row: i+2, reason: 'col[10] date "' + cols[10] + '" could not be parsed as DD/MM/YYYY' });
+    }
+  });
+
+  // Sample: first 5 data rows showing col[1]=Depot, col[6]=Desc, col[10]=Date
+  const samples = dataRows.slice(0, 5).map((cols, i) => ({
+    row: i+2,
+    depot: cols[1] ?? '—',
+    desc:  (cols[6] ?? '—').substring(0, 30),
+    rawDate: cols[10] ?? '—',
+    dateOk:  !!parseDMY(cols[10])
+  }));
+
+  const dp = document.getElementById('diag-panel');
+  const dc = document.getElementById('diag-content');
+
+  let html = '<table><tr><th>Item</th><th>Value</th></tr>';
+  html += '<tr><td>File sheets</td><td>' + wb.SheetNames.map((s,i) => (i===0?'<b>':'') + s + (i===0?' (used)</b>':'')).join(', ') + '</td></tr>';
+  html += '<tr><td>Raw rows (inc. header)</td><td>' + raw.length + '</td></tr>';
+  html += '<tr><td>Data rows (non-blank)</td><td>' + dataRows.length + '</td></tr>';
+  html += '<tr><td>Rows accepted by buildRow</td><td class="' + (accepted > 0 ? 'diag-ok' : 'diag-err') + '">' + accepted + '</td></tr>';
+  html += '<tr><td>Header row (cols 0–11)</td><td>' + header.slice(0,12).map((h,i)=>'<span title="col '+i+'">'+i+':'+h+'</span>').join(' | ') + '</td></tr>';
+  html += '</table>';
+
+  if (samples.length) {
+    html += '<br><table><tr><th>Row</th><th>col[1] Depot</th><th>col[6] Description</th><th>col[10] Date raw</th><th>parseDMY?</th></tr>';
+    samples.forEach(s => {
+      html += '<tr><td>' + s.row + '</td><td>' + s.depot + '</td><td>' + s.desc + '</td><td><b>' + s.rawDate + '</b></td><td class="' + (s.dateOk ? 'diag-ok' : 'diag-err') + '">' + (s.dateOk ? '✓ ok' : '✗ fail') + '</td></tr>';
+    });
+    html += '</table>';
+  }
+
+  if (rejections.length) {
+    html += '<br><b class="diag-err">Rejection reasons (first 10 rows):</b><table><tr><th>Row</th><th>Reason</th></tr>';
+    rejections.forEach(r => { html += '<tr><td>' + r.row + '</td><td class="diag-err">' + r.reason + '</td></tr>'; });
+    html += '</table>';
+  } else if (accepted > 0) {
+    html += '<br><span class="diag-ok">✓ All sampled rows parsed successfully.</span>';
+  }
+
+  dc.innerHTML = html;
+  dp.style.display = 'block';
+}
+
 // ── Upload Handler ───────────────────────────────────────────────────────────
 function initUpload() {
   document.getElementById('csv-input').addEventListener('change', e => {
@@ -300,6 +370,7 @@ function initUpload() {
       state.allRows = dataRows.map(buildRow).filter(Boolean);
       state.depots  = [...new Set(state.allRows.map(r => r.depot))].sort();
       state.activeDepot = 'ALL';
+      showDiagnostics(wb, raw, state.allRows.length);
       renderDepotPanel(state.allRows);
       document.getElementById('empty-state').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
