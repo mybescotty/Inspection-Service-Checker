@@ -215,6 +215,12 @@ function getRowClass(diff) {
   if (diff === 0) return 'row-green';
   return '';
 }
+function getServiceRowClass(diff) {
+  if (diff <= -35) return 'row-red';
+  if (diff <= -15) return 'row-amber';
+  if (diff <= 0)   return 'row-green';
+  return '';
+}
 
 // ── Build Row (new column mapping) ───────────────────────────────────────────
 // Col: 0=OpCo 1=Equipment 2=Depot 3=Created 4=RegPlate 5=WO_No 6=Sequence
@@ -227,6 +233,7 @@ function buildRow(cols) {
   const equipment = String(cols[1] || '').trim();
   if (!equipment) return null;
   const diff = daysDiff(schedDate);
+  const type = classifyType(cols[7]);
   return {
     opco:        String(cols[0]  || '').trim(),
     depot:       String(cols[2]  || '').trim(),
@@ -238,8 +245,8 @@ function buildRow(cols) {
     priority:    String(cols[11] || '').trim(),
     schedDate,
     diff,
-    rowClass:    getRowClass(diff),
-    type:        classifyType(cols[7])
+    rowClass:    type === 'service' ? getServiceRowClass(diff) : getRowClass(diff),
+    type
   };
 }
 
