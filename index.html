@@ -411,7 +411,7 @@ function applyFilter() {
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
   const insp = filtered.filter(r => r.type === 'inspection' && !/review complete|cancelled|inspection completed|closed|review comments/i.test(r.status));
-  const svc  = filtered.filter(r => r.type === 'service'    && !/closed|cancelled|review complete/i.test(r.status));
+  const svc  = filtered.filter(r => r.type === 'service'    && !/closed|cancelled|review complete|activities completed|review comments/i.test(r.status));
   renderDepotPanel(state.allRows);
   renderBusPanel(filtered);
   if (state.selectedBus) {
