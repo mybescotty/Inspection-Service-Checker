@@ -227,18 +227,18 @@ function buildRow(cols) {
   if (!equipment) return null;
   const diff = daysDiff(schedDate);
   return {
-    depot:         String(cols[2]  || '').trim(),
+    opco:        String(cols[0]  || '').trim(),
+    depot:       String(cols[2]  || '').trim(),
     equipment,
-    regPlate:      String(cols[4]  || '').trim(),
-    workOrder:     String(cols[5]  || '').trim(),
-    description:   String(cols[7]  || '').trim(),
-    status:        String(cols[8]  || '').trim(),
-    priority:      String(cols[11] || '').trim(),
+    regPlate:    String(cols[4]  || '').trim(),
+    workOrder:   String(cols[5]  || '').trim(),
+    description: String(cols[7]  || '').trim(),
+    status:      String(cols[8]  || '').trim(),
+    priority:    String(cols[11] || '').trim(),
     schedDate,
     diff,
-    rowClass:      getRowClass(diff),
-    type:          classifyType(cols[7]),
-    dateCompleted: parseFlexDate(cols[14])
+    rowClass:    getRowClass(diff),
+    type:        classifyType(cols[7])
   };
 }
 
@@ -360,9 +360,7 @@ function renderTlSection(rows) {
   const html = [];
   rows.forEach((r, i) => {
     let dotClass;
-    if (r.dateCompleted)   dotClass = 'tl-dot-done';
-    else if (r.diff <= -3) dotClass = 'tl-dot-red';
-    else if (r.diff <= -1) dotClass = 'tl-dot-amber';
+    if (r.diff < 0)        dotClass = 'tl-dot-done';
     else if (r.diff === 0) dotClass = 'tl-dot-green';
     else                   dotClass = 'tl-dot-upcoming';
     const next = rows[i + 1];
@@ -374,8 +372,8 @@ function renderTlSection(rows) {
       '  <div class="tl-info">',
       '    <div class="tl-date">' + fmtDate(r.schedDate) + '</div>',
       '    <div class="tl-desc">' + vor + r.description + '</div>',
-      '    <div class="tl-meta">' + r.status +
-           (r.dateCompleted ? ' · <span class="tl-completed">✓ ' + fmtDate(r.dateCompleted) + '</span>' : '') +
+      '    <div class="tl-meta">Depot ' + r.depot + ' · ' + r.opco +
+           ' · ' + r.status +
            (r.priority && !r.priority.toUpperCase().includes('VOR') ? ' · ' + r.priority : '') + '</div>',
       '  </div>',
       '</div>'
@@ -389,8 +387,9 @@ function renderBusTimeline(busRows) {
   const firstRow = busRows[0] || {};
   document.getElementById('tl-bus-title').textContent =
     'Fleet ' + state.selectedBus + ' · ' + (firstRow.regPlate || '—');
+  const depots = [...new Set(busRows.map(r => r.depot))].sort().join(', ');
   document.getElementById('tl-bus-sub').textContent =
-    'Depot ' + state.activeDepot + ' · ' + busRows.length + ' records';
+    'Depots: ' + depots + ' · ' + busRows.length + ' records';
   const inspRows = [...busRows].filter(r => r.type === 'inspection').sort((a, b) => b.schedDate - a.schedDate);
   const svcRows  = [...busRows].filter(r => r.type === 'service').sort((a, b) => b.schedDate - a.schedDate);
   let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">';
@@ -413,7 +412,7 @@ function applyFilter() {
   renderDepotPanel(state.allRows);
   renderBusPanel(filtered);
   if (state.selectedBus) {
-    const busRows = filtered.filter(r => r.equipment === state.selectedBus);
+    const busRows = state.allRows.filter(r => r.equipment === state.selectedBus);
     document.getElementById('overview-sections').style.display = 'none';
     document.getElementById('bus-timeline').style.display = 'flex';
     renderBusTimeline(busRows);
