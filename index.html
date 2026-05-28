@@ -31,14 +31,25 @@
   .stat strong { display: block; font-size: 16px; font-weight: 700; }
   .stat span { opacity: 0.75; }
   #app { display: none; flex: 1; overflow: hidden; }
-  #depot-panel { width: 155px; min-width: 140px; background: var(--bg-panel); border-right: 1px solid var(--border); overflow-y: auto; flex-shrink: 0; padding: 10px 0; }
-  #depot-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); padding: 0 14px 8px; }
-  #depot-list { list-style: none; }
-  .depot-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; cursor: pointer; font-size: 13px; border-radius: 0 20px 20px 0; margin-right: 8px; transition: background 0.15s; }
+  /* ── Left sidebar ── */
+  #sidebar { width: 190px; min-width: 170px; background: var(--bg-panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0; }
+  #depot-panel { flex-shrink: 0; padding: 10px 0 4px; }
+  #depot-panel h3, #bus-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); padding: 0 14px 6px; }
+  #depot-list, #bus-list { list-style: none; }
+  .depot-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 14px; cursor: pointer; font-size: 13px; border-radius: 0 20px 20px 0; margin-right: 8px; transition: background 0.15s; }
   .depot-item:hover { background: #eaf3fb; }
   .depot-item.active { background: var(--accent); color: #fff; }
   .depot-badge { font-size: 11px; background: rgba(0,0,0,0.12); border-radius: 10px; padding: 1px 7px; min-width: 22px; text-align: center; }
   .depot-item.active .depot-badge { background: rgba(255,255,255,0.25); }
+  #bus-panel { flex: 1; overflow-y: auto; border-top: 1px solid var(--border); padding-top: 6px; display: none; }
+  .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 14px 6px 12px; cursor: pointer; font-size: 12px; border-radius: 0 16px 16px 0; margin-right: 8px; transition: background 0.15s; gap: 6px; }
+  .bus-item:hover { background: #eaf3fb; }
+  .bus-item.active { background: var(--accent); color: #fff; }
+  .bus-item .bus-num { font-weight: 600; font-size: 12px; }
+  .bus-item .bus-reg { font-size: 10px; opacity: 0.7; }
+  .bus-overdue-dot { width: 7px; height: 7px; border-radius: 50%; background: #e74c3c; flex-shrink: 0; }
+  .bus-item.active .bus-overdue-dot { background: rgba(255,255,255,0.7); }
+  /* ── Main content ── */
   #content { flex: 1; overflow-y: auto; padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
   .section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
@@ -60,6 +71,30 @@
   #chart-section { flex-shrink: 0; }
   .chart-card { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 12px 16px 8px; }
   #workload-chart { display: block; width: 100%; }
+  /* ── Bus timeline view ── */
+  #bus-timeline { display: none; flex-direction: column; gap: 0; }
+  .tl-header { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 14px 18px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .tl-back { background: none; border: 1px solid var(--border); border-radius: 5px; padding: 5px 12px; font-size: 13px; cursor: pointer; color: var(--text-primary); }
+  .tl-back:hover { background: #eaf3fb; }
+  .tl-bus-title { font-size: 17px; font-weight: 700; }
+  .tl-bus-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+  .tl-body { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 16px 20px; }
+  .tl-event { display: flex; gap: 14px; align-items: flex-start; }
+  .tl-dot-wrap { display: flex; flex-direction: column; align-items: center; }
+  .tl-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+  .tl-dot-done     { background: #95a5a6; }
+  .tl-dot-upcoming { background: #3498db; }
+  .tl-dot-amber    { background: #f39c12; }
+  .tl-dot-red      { background: #e74c3c; }
+  .tl-dot-green    { background: #27ae60; }
+  .tl-connector { width: 2px; flex: 1; min-height: 28px; background: #dde3ea; margin: 4px 0; }
+  .tl-gap-label { font-size: 11px; color: var(--text-secondary); padding: 6px 0 6px 12px; border-left: 2px dashed #dde3ea; margin: 2px 0 2px 6px; }
+  .tl-info { flex: 1; padding-bottom: 4px; }
+  .tl-date { font-weight: 600; font-size: 13px; }
+  .tl-desc { font-size: 13px; margin-top: 1px; }
+  .tl-meta { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+  .tl-completed { color: #27ae60; }
+  /* ── Empty state ── */
   #empty-state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; color: var(--text-secondary); }
   #empty-state svg { opacity: 0.3; }
   #empty-state p { font-size: 15px; }
@@ -83,47 +118,59 @@
   </div>
 </header>
 <div id="app">
-  <aside id="depot-panel">
-    <h3>Depots</h3>
-    <ul id="depot-list"></ul>
-  </aside>
+  <div id="sidebar">
+    <div id="depot-panel">
+      <h3>Depots</h3>
+      <ul id="depot-list"></ul>
+    </div>
+    <div id="bus-panel">
+      <h3>Fleet</h3>
+      <ul id="bus-list"></ul>
+    </div>
+  </div>
   <main id="content">
-    <section id="inspections-section">
-      <div class="section-title">Vehicle Inspections</div>
-      <div class="table-card"><div id="inspections-table-wrap"></div></div>
-    </section>
-    <section id="servicing-section">
-      <div class="section-title">Servicing</div>
-      <div class="table-card"><div id="servicing-table-wrap"></div></div>
-    </section>
-    <section id="chart-section">
-      <div class="section-title">Daily Workload</div>
-      <div class="chart-card">
-        <canvas id="workload-chart" height="240"></canvas>
-        <div class="legend">
-          <div class="legend-item"><div class="legend-swatch" style="background:#3498db"></div>Inspections</div>
-          <div class="legend-item"><div class="legend-swatch" style="background:#e67e22"></div>Services</div>
-          <div class="legend-item"><div class="legend-swatch" style="background:#e74c3c;width:3px;border-radius:0"></div>Today</div>
+    <div id="overview-sections">
+      <section id="inspections-section">
+        <div class="section-title">Vehicle Inspections</div>
+        <div class="table-card"><div id="inspections-table-wrap"></div></div>
+      </section>
+      <section id="servicing-section">
+        <div class="section-title">Servicing</div>
+        <div class="table-card"><div id="servicing-table-wrap"></div></div>
+      </section>
+      <section id="chart-section">
+        <div class="section-title">Daily Workload</div>
+        <div class="chart-card">
+          <canvas id="workload-chart" height="240"></canvas>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-swatch" style="background:#3498db"></div>Inspections</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#e67e22"></div>Services</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#e74c3c;width:3px;border-radius:0"></div>Today</div>
+          </div>
+        </div>
+      </section>
+    </div>
+    <div id="bus-timeline">
+      <div class="tl-header">
+        <button class="tl-back" id="tl-back-btn">← Back</button>
+        <div>
+          <div class="tl-bus-title" id="tl-bus-title"></div>
+          <div class="tl-bus-sub" id="tl-bus-sub"></div>
         </div>
       </div>
-    </section>
+      <div class="tl-body" id="tl-body"></div>
+    </div>
   </main>
 </div>
 <div id="empty-state">
   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
   <p>Upload an Excel file (.xlsx) to view work orders</p>
-  <small>Columns: Depot · Equipment · WO Number · Description · Status · Sched. Start Date</small>
+  <small>Columns: Equipment · Depot · Reg · Description · Status · Sched. Start Date · Date Completed</small>
 </div>
 <script>
-// ── Constants & State ────────────────────────────────────────────────────────
+// ── State ────────────────────────────────────────────────────────────────────
 const TODAY = new Date(new Date().toDateString());
-
-const state = {
-  allRows: [],
-  depots: [],
-  activeDepot: 'ALL'
-};
-
+const state = { allRows: [], activeDepot: 'ALL', selectedBus: null };
 // ── Date Utilities ───────────────────────────────────────────────────────────
 function parseDMY(s) {
   if (!s) return null;
@@ -132,30 +179,18 @@ function parseDMY(s) {
   const d = new Date(+m[3], +m[2] - 1, +m[1]);
   return isNaN(d) ? null : d;
 }
-
 function parseFlexDate(v) {
   if (!v) return null;
-  if (v instanceof Date) {
-    if (isNaN(v)) return null;
-    return new Date(v.getFullYear(), v.getMonth(), v.getDate());
-  }
+  if (v instanceof Date) { if (isNaN(v)) return null; return new Date(v.getFullYear(), v.getMonth(), v.getDate()); }
   return parseDMY(String(v));
 }
-
-function daysDiff(date) {
-  return Math.round((date - TODAY) / 86400000);
-}
-
+function daysDiff(date) { return Math.round((date - TODAY) / 86400000); }
 function fmtDate(d) {
   if (!d) return '—';
-  return String(d.getDate()).padStart(2,'0') + '/' +
-    String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
+  return String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0') + '/' + d.getFullYear();
 }
-
 function isoKey(d) {
-  return d.getFullYear() + '-' +
-    String(d.getMonth()+1).padStart(2,'0') + '-' +
-    String(d.getDate()).padStart(2,'0');
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
 }
 
 // ── Data Classification ──────────────────────────────────────────────────────
@@ -165,7 +200,6 @@ function classifyType(desc) {
   if (d.includes('service'))   return 'service';
   return 'other';
 }
-
 function getRowClass(diff) {
   if (diff <= -3) return 'row-red';
   if (diff <= -1) return 'row-amber';
@@ -173,26 +207,33 @@ function getRowClass(diff) {
   return '';
 }
 
+// ── Build Row (new column mapping) ───────────────────────────────────────────
+// Col: 0=OpCo 1=Equipment 2=Depot 3=Created 4=RegPlate 5=WO_No 6=Sequence
+//      7=Description 8=Status 9=MaintPattern 10=StandardWO 11=Priority
+//      12=OrigPMDue 13=SchedStart 14=DateCompleted
 function buildRow(cols) {
-  if (!cols || cols.length < 11) return null;
-  const schedDate = parseFlexDate(cols[10]);
+  if (!cols || cols.length < 14) return null;
+  const schedDate = parseFlexDate(cols[13]);
   if (!schedDate) return null;
-  const equipment = String(cols[2] || '').trim();
+  const equipment = String(cols[1] || '').trim();
   if (!equipment) return null;
   const diff = daysDiff(schedDate);
   return {
-    depot:       String(cols[1] || '').trim(),
+    depot:         String(cols[2]  || '').trim(),
     equipment,
-    workOrder:   String(cols[3] || '').trim(),
-    description: String(cols[6] || '').trim(),
-    status:      String(cols[7] || '').trim(),
-    priority:    String(cols[8] || '').trim(),
+    regPlate:      String(cols[4]  || '').trim(),
+    workOrder:     String(cols[5]  || '').trim(),
+    description:   String(cols[7]  || '').trim(),
+    status:        String(cols[8]  || '').trim(),
+    priority:      String(cols[11] || '').trim(),
     schedDate,
     diff,
-    rowClass:    getRowClass(diff),
-    type:        classifyType(cols[6])
+    rowClass:      getRowClass(diff),
+    type:          classifyType(cols[7]),
+    dateCompleted: parseFlexDate(cols[14])
   };
 }
+
 // ── Summary Stats ────────────────────────────────────────────────────────────
 function updateSummaryStats(all, insp, svc) {
   const overdue = all.filter(r => r.diff < 0).length;
@@ -209,14 +250,12 @@ function renderDepotPanel(rows) {
   rows.forEach(r => { counts[r.depot] = (counts[r.depot] || 0) + 1; });
   const depots = Object.keys(counts).sort((a, b) => +a - +b || a.localeCompare(b));
   const list = document.getElementById('depot-list');
-
+  list.innerHTML = '';
   const allLi = document.createElement('li');
   allLi.className = 'depot-item' + (state.activeDepot === 'ALL' ? ' active' : '');
   allLi.dataset.depot = 'ALL';
   allLi.innerHTML = '<span>All Depots</span><span class="depot-badge">' + rows.length + '</span>';
-  list.innerHTML = '';
   list.appendChild(allLi);
-
   depots.forEach(dep => {
     const li = document.createElement('li');
     li.className = 'depot-item' + (state.activeDepot === dep ? ' active' : '');
@@ -225,15 +264,54 @@ function renderDepotPanel(rows) {
     list.appendChild(li);
   });
 }
-
-// single delegated listener (attached once at init)
 function initDepotPanel() {
   document.getElementById('depot-list').addEventListener('click', e => {
     const item = e.target.closest('.depot-item');
     if (!item) return;
     state.activeDepot = item.dataset.depot;
+    state.selectedBus = null;
     document.querySelectorAll('.depot-item').forEach(el => el.classList.remove('active'));
     item.classList.add('active');
+    applyFilter();
+  });
+}
+// ── Bus Panel ────────────────────────────────────────────────────────────────
+function renderBusPanel(filteredRows) {
+  const panel = document.getElementById('bus-panel');
+  if (state.activeDepot === 'ALL') { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+  const buses = {};
+  filteredRows.forEach(r => {
+    if (!buses[r.equipment]) buses[r.equipment] = { reg: r.regPlate, count: 0, hasOverdue: false };
+    buses[r.equipment].count++;
+    if (r.diff < 0) buses[r.equipment].hasOverdue = true;
+  });
+  const sorted = Object.keys(buses).sort((a, b) => +a - +b || a.localeCompare(b));
+  const list = document.getElementById('bus-list');
+  list.innerHTML = '';
+  sorted.forEach(eq => {
+    const b = buses[eq];
+    const li = document.createElement('li');
+    li.className = 'bus-item' + (state.selectedBus === eq ? ' active' : '');
+    li.dataset.bus = eq;
+    li.innerHTML =
+      '<div><div class="bus-num">' + eq + '</div><div class="bus-reg">' + (b.reg || '—') + '</div></div>' +
+      (b.hasOverdue ? '<div class="bus-overdue-dot"></div>' : '');
+    list.appendChild(li);
+  });
+}
+function initBusPanel() {
+  document.getElementById('bus-list').addEventListener('click', e => {
+    const item = e.target.closest('.bus-item');
+    if (!item) return;
+    state.selectedBus = item.dataset.bus;
+    document.querySelectorAll('.bus-item').forEach(el => el.classList.remove('active'));
+    item.classList.add('active');
+    applyFilter();
+  });
+  document.getElementById('tl-back-btn').addEventListener('click', () => {
+    state.selectedBus = null;
+    document.querySelectorAll('.bus-item').forEach(el => el.classList.remove('active'));
     applyFilter();
   });
 }
@@ -246,36 +324,66 @@ function renderTable(container, rows, type) {
   }
   const sorted = [...rows].sort((a, b) => a.diff - b.diff);
   const html = ['<table class="wo-table"><thead><tr>',
-    '<th>Depot</th><th>Equipment</th><th>Work Order</th><th>Description</th>',
-    '<th>Status</th><th>Priority</th><th>Sched. Date</th><th>Days</th>',
+    '<th>Depot</th><th>Fleet</th><th>Reg</th><th>Description</th><th>Status</th><th>Priority</th><th>Sched. Date</th><th>Days</th>',
     '</tr></thead><tbody>'];
-
   sorted.forEach(r => {
     let daysText, daysClass;
-    if (r.diff < 0) {
-      daysText = r.diff + 'd'; daysClass = 'days-overdue';
-    } else if (r.diff === 0) {
-      daysText = 'Today'; daysClass = 'days-today';
-    } else {
-      daysText = '+' + r.diff + 'd'; daysClass = 'days-future';
-    }
-    const vor = r.priority.toUpperCase().includes('VOR') ?
-      '<span class="priority-vor">VOR</span> ' : '';
-    html.push(
-      '<tr class="' + r.rowClass + '">',
+    if (r.diff < 0)      { daysText = r.diff + 'd';       daysClass = 'days-overdue'; }
+    else if (r.diff === 0) { daysText = 'Today';           daysClass = 'days-today'; }
+    else                 { daysText = '+' + r.diff + 'd'; daysClass = 'days-future'; }
+    const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor">VOR</span> ' : '';
+    html.push('<tr class="' + r.rowClass + '">',
       '<td>' + r.depot + '</td>',
       '<td>' + r.equipment + '</td>',
-      '<td>' + r.workOrder + '</td>',
+      '<td>' + r.regPlate + '</td>',
       '<td>' + r.description + '</td>',
       '<td>' + r.status + '</td>',
       '<td>' + vor + r.priority.replace(/x\s*\(vor\)/i,'').trim() + '</td>',
       '<td>' + fmtDate(r.schedDate) + '</td>',
       '<td class="days-col ' + daysClass + '">' + daysText + '</td>',
-      '</tr>'
-    );
+      '</tr>');
   });
   html.push('</tbody></table>');
   container.innerHTML = html.join('');
+}
+
+// ── Bus Timeline ─────────────────────────────────────────────────────────────
+function renderBusTimeline(busRows) {
+  // newest first
+  const sorted = [...busRows].sort((a, b) => b.schedDate - a.schedDate);
+  const firstRow = sorted[sorted.length - 1] || sorted[0];
+  document.getElementById('tl-bus-title').textContent =
+    'Fleet ' + state.selectedBus + ' · ' + (firstRow.regPlate || '—');
+  document.getElementById('tl-bus-sub').textContent =
+    'Depot ' + state.activeDepot + ' · ' + busRows.length + ' records';
+  const html = [];
+  sorted.forEach((r, i) => {
+    let dotClass;
+    if (r.dateCompleted)     dotClass = 'tl-dot-done';
+    else if (r.diff <= -3)   dotClass = 'tl-dot-red';
+    else if (r.diff <= -1)   dotClass = 'tl-dot-amber';
+    else if (r.diff === 0)   dotClass = 'tl-dot-green';
+    else                     dotClass = 'tl-dot-upcoming';
+    const next = sorted[i + 1];
+    const gap = next ? Math.abs(Math.round((r.schedDate - next.schedDate) / 86400000)) : null;
+    const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor" style="font-size:10px">VOR</span> ' : '';
+    html.push(
+      '<div class="tl-event">',
+      '  <div class="tl-dot-wrap"><div class="tl-dot ' + dotClass + '"></div>' + (gap !== null ? '<div class="tl-connector"></div>' : '') + '</div>',
+      '  <div class="tl-info">',
+      '    <div class="tl-date">' + fmtDate(r.schedDate) + '</div>',
+      '    <div class="tl-desc">' + vor + r.description + '</div>',
+      '    <div class="tl-meta">' + r.status +
+           (r.dateCompleted ? ' · <span class="tl-completed">✓ Completed ' + fmtDate(r.dateCompleted) + '</span>' : '') +
+           (r.priority && !r.priority.toUpperCase().includes('VOR') ? ' · ' + r.priority : '') + '</div>',
+      '  </div>',
+      '</div>'
+    );
+    if (gap !== null) {
+      html.push('<div class="tl-gap-label">▲ ' + gap + ' days</div>');
+    }
+  });
+  document.getElementById('tl-body').innerHTML = html.join('');
 }
 
 // ── Filter Orchestrator ──────────────────────────────────────────────────────
@@ -283,14 +391,105 @@ function applyFilter() {
   const filtered = state.activeDepot === 'ALL'
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
-
   const insp = filtered.filter(r => r.type === 'inspection');
   const svc  = filtered.filter(r => r.type === 'service');
-
-  renderTable(document.getElementById('inspections-table-wrap'), insp, 'inspection');
-  renderTable(document.getElementById('servicing-table-wrap'),   svc,  'service');
-  renderChart(insp, svc);
+  renderDepotPanel(state.allRows);
+  renderBusPanel(filtered);
+  if (state.selectedBus) {
+    const busRows = filtered.filter(r => r.equipment === state.selectedBus);
+    document.getElementById('overview-sections').style.display = 'none';
+    document.getElementById('bus-timeline').style.display = 'flex';
+    renderBusTimeline(busRows);
+  } else {
+    document.getElementById('overview-sections').style.display = 'block';
+    document.getElementById('bus-timeline').style.display = 'none';
+    renderTable(document.getElementById('inspections-table-wrap'), insp, 'inspection');
+    renderTable(document.getElementById('servicing-table-wrap'),   svc,  'service');
+    renderChart(insp, svc);
+  }
   updateSummaryStats(filtered, insp, svc);
+}
+// ── Chart Helpers ────────────────────────────────────────────────────────────
+function niceStep(max, ticks) {
+  const raw = max / ticks;
+  const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
+  return candidates.find(c => c >= raw) ?? Math.ceil(raw / 10) * 10;
+}
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate() + n); return r; }
+
+// ── Chart Renderer ───────────────────────────────────────────────────────────
+function renderChart(insp, svc) {
+  const canvas = document.getElementById('workload-chart');
+  const ctx    = canvas.getContext('2d');
+  canvas.width = canvas.parentElement.clientWidth - 32;
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+  const allDates = [...insp, ...svc].map(r => r.schedDate);
+  let minD = allDates.length ? new Date(Math.min(...allDates)) : addDays(TODAY, -3);
+  let maxD = allDates.length ? new Date(Math.max(...allDates)) : addDays(TODAY, 10);
+  minD = addDays(minD, -1);
+  maxD = addDays(maxD, 1);
+  if (TODAY < minD) minD = addDays(TODAY, -1);
+  if (TODAY > maxD) maxD = addDays(TODAY, 1);
+  const dates = [];
+  for (let d = new Date(minD); d <= maxD; d = addDays(d, 1)) dates.push(isoKey(d));
+  if (!dates.length) return;
+  const counts = {};
+  dates.forEach(k => { counts[k] = { i: 0, s: 0 }; });
+  insp.forEach(r => { const k = isoKey(r.schedDate); if (counts[k]) counts[k].i++; });
+  svc.forEach(r =>  { const k = isoKey(r.schedDate); if (counts[k]) counts[k].s++; });
+  const maxCount = Math.max(...Object.values(counts).flatMap(v => [v.i, v.s]), 1);
+  const PAD = { top: 30, right: 20, bottom: 56, left: 38 };
+  const cW = W - PAD.left - PAD.right;
+  const cH = H - PAD.top  - PAD.bottom;
+  const groupW = cW / dates.length;
+  const barW   = Math.max(3, Math.min(22, groupW * 0.36));
+  const gap    = Math.max(1, groupW * 0.05);
+  const step   = niceStep(maxCount, 5);
+  const yTicks = Math.ceil(maxCount / step);
+  ctx.font = '11px system-ui'; ctx.fillStyle = '#95a5a6'; ctx.textAlign = 'right';
+  for (let t = 0; t <= yTicks; t++) {
+    const val = t * step;
+    const y = PAD.top + cH - (val / (yTicks * step)) * cH;
+    ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
+    ctx.fillStyle = '#95a5a6'; ctx.fillText(val, PAD.left - 4, y + 4);
+  }
+  dates.forEach((k, i) => {
+    const xGroup = PAD.left + i * groupW;
+    const xI = xGroup + groupW / 2 - barW - gap / 2;
+    const xS = xGroup + groupW / 2 + gap / 2;
+    const hI = (counts[k].i / (yTicks * step)) * cH;
+    const hS = (counts[k].s / (yTicks * step)) * cH;
+    if (hI > 0) { ctx.fillStyle = '#3498db'; ctx.fillRect(xI, PAD.top + cH - hI, barW, hI); }
+    if (hS > 0) { ctx.fillStyle = '#e67e22'; ctx.fillRect(xS, PAD.top + cH - hS, barW, hS); }
+    ctx.font = '10px system-ui'; ctx.textAlign = 'center';
+    if (counts[k].i > 0) { ctx.fillStyle = '#2980b9'; ctx.fillText(counts[k].i, xI + barW/2, PAD.top + cH - hI - 3); }
+    if (counts[k].s > 0) { ctx.fillStyle = '#d35400'; ctx.fillText(counts[k].s, xS + barW/2, PAD.top + cH - hS - 3); }
+  });
+  const showEvery = Math.max(1, Math.ceil(dates.length / 22));
+  ctx.font = '11px system-ui'; ctx.fillStyle = '#7f8c8d'; ctx.textAlign = 'right';
+  dates.forEach((k, i) => {
+    if (i % showEvery !== 0) return;
+    const x = PAD.left + i * groupW + groupW / 2;
+    const parts = k.split('-');
+    const label = parts[2] + '/' + parts[1];
+    ctx.save(); ctx.translate(x, PAD.top + cH + 6); ctx.rotate(-Math.PI / 4);
+    ctx.fillText(label, 0, 0); ctx.restore();
+  });
+  const todayKey = isoKey(TODAY);
+  const ti = dates.indexOf(todayKey);
+  if (ti >= 0) {
+    const tx = PAD.left + ti * groupW + groupW / 2;
+    ctx.strokeStyle = '#e74c3c'; ctx.setLineDash([4, 3]); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(tx, PAD.top); ctx.lineTo(tx, PAD.top + cH); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.font = 'bold 11px system-ui'; ctx.fillStyle = '#e74c3c'; ctx.textAlign = 'center';
+    ctx.fillText('Today', tx, PAD.top - 6);
+  }
+  ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.left, PAD.top); ctx.lineTo(PAD.left, PAD.top + cH);
+  ctx.lineTo(PAD.left + cW, PAD.top + cH); ctx.stroke();
 }
 
 // ── Upload Handler ───────────────────────────────────────────────────────────
@@ -305,9 +504,8 @@ function initUpload() {
       const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
       const dataRows = raw.slice(1);
       state.allRows = dataRows.map(buildRow).filter(Boolean);
-      state.depots  = [...new Set(state.allRows.map(r => r.depot))].sort();
       state.activeDepot = 'ALL';
-      renderDepotPanel(state.allRows);
+      state.selectedBus = null;
       document.getElementById('empty-state').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       applyFilter();
@@ -315,151 +513,13 @@ function initUpload() {
     reader.readAsArrayBuffer(file);
   });
 }
-// ── Chart Helpers ────────────────────────────────────────────────────────────
-function niceStep(max, ticks) {
-  const raw = max / ticks;
-  const candidates = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500];
-  return candidates.find(c => c >= raw) ?? Math.ceil(raw / 10) * 10;
-}
-
-function addDays(d, n) {
-  const r = new Date(d); r.setDate(r.getDate() + n); return r;
-}
-
-// ── Chart Renderer (Canvas) ──────────────────────────────────────────────────
-function renderChart(insp, svc) {
-  const canvas = document.getElementById('workload-chart');
-  const ctx    = canvas.getContext('2d');
-  canvas.width = canvas.parentElement.clientWidth - 32;
-  const W = canvas.width, H = canvas.height;
-  ctx.clearRect(0, 0, W, H);
-
-  // Build date range from data; pad ±2 days; always include today
-  const allDates = [...insp, ...svc].map(r => r.schedDate);
-  let minD = allDates.length ? new Date(Math.min(...allDates)) : addDays(TODAY, -3);
-  let maxD = allDates.length ? new Date(Math.max(...allDates)) : addDays(TODAY, 10);
-  minD = addDays(minD, -1);
-  maxD = addDays(maxD, 1);
-  if (TODAY < minD) minD = addDays(TODAY, -1);
-  if (TODAY > maxD) maxD = addDays(TODAY, 1);
-
-  // Build sorted date key array
-  const dates = [];
-  for (let d = new Date(minD); d <= maxD; d = addDays(d, 1)) {
-    dates.push(isoKey(d));
-  }
-  if (!dates.length) return;
-
-  // Aggregate counts
-  const counts = {};
-  dates.forEach(k => { counts[k] = { i: 0, s: 0 }; });
-  insp.forEach(r => { const k = isoKey(r.schedDate); if (counts[k]) counts[k].i++; });
-  svc.forEach(r =>  { const k = isoKey(r.schedDate); if (counts[k]) counts[k].s++; });
-  const maxCount = Math.max(...Object.values(counts).flatMap(v => [v.i, v.s]), 1);
-
-  // Layout
-  const PAD = { top: 30, right: 20, bottom: 56, left: 38 };
-  const cW = W - PAD.left - PAD.right;
-  const cH = H - PAD.top  - PAD.bottom;
-  const groupW = cW / dates.length;
-  const barW   = Math.max(3, Math.min(22, groupW * 0.36));
-  const gap    = Math.max(1, groupW * 0.05);
-
-  // Y gridlines & labels
-  const step  = niceStep(maxCount, 5);
-  const yTicks = Math.ceil(maxCount / step);
-  ctx.font = '11px system-ui';
-  ctx.fillStyle = '#95a5a6';
-  ctx.textAlign = 'right';
-  for (let t = 0; t <= yTicks; t++) {
-    const val = t * step;
-    const y = PAD.top + cH - (val / (yTicks * step)) * cH;
-    ctx.strokeStyle = '#ecf0f1';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + cW, y); ctx.stroke();
-    ctx.fillStyle = '#95a5a6';
-    ctx.fillText(val, PAD.left - 4, y + 4);
-  }
-
-  // Draw bars
-  dates.forEach((k, i) => {
-    const xGroup = PAD.left + i * groupW;
-    const xI = xGroup + groupW / 2 - barW - gap / 2;
-    const xS = xGroup + groupW / 2 + gap / 2;
-    const hI = (counts[k].i / (yTicks * step)) * cH;
-    const hS = (counts[k].s / (yTicks * step)) * cH;
-
-    if (hI > 0) {
-      ctx.fillStyle = '#3498db';
-      ctx.fillRect(xI, PAD.top + cH - hI, barW, hI);
-    }
-    if (hS > 0) {
-      ctx.fillStyle = '#e67e22';
-      ctx.fillRect(xS, PAD.top + cH - hS, barW, hS);
-    }
-
-    // Count labels above bars
-    ctx.font = '10px system-ui';
-    ctx.textAlign = 'center';
-    if (counts[k].i > 0) {
-      ctx.fillStyle = '#2980b9';
-      ctx.fillText(counts[k].i, xI + barW / 2, PAD.top + cH - hI - 3);
-    }
-    if (counts[k].s > 0) {
-      ctx.fillStyle = '#d35400';
-      ctx.fillText(counts[k].s, xS + barW / 2, PAD.top + cH - hS - 3);
-    }
-  });
-
-  // X-axis labels (rotated DD/MM)
-  const showEvery = Math.max(1, Math.ceil(dates.length / 22));
-  ctx.font = '11px system-ui';
-  ctx.fillStyle = '#7f8c8d';
-  ctx.textAlign = 'right';
-  dates.forEach((k, i) => {
-    if (i % showEvery !== 0) return;
-    const x = PAD.left + i * groupW + groupW / 2;
-    const y = PAD.top + cH + 6;
-    const parts = k.split('-');
-    const label = parts[2] + '/' + parts[1];
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(-Math.PI / 4);
-    ctx.fillText(label, 0, 0);
-    ctx.restore();
-  });
-
-  // Today vertical dashed line
-  const todayKey = isoKey(TODAY);
-  const ti = dates.indexOf(todayKey);
-  if (ti >= 0) {
-    const tx = PAD.left + ti * groupW + groupW / 2;
-    ctx.strokeStyle = '#e74c3c';
-    ctx.setLineDash([4, 3]);
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(tx, PAD.top); ctx.lineTo(tx, PAD.top + cH); ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.font = 'bold 11px system-ui';
-    ctx.fillStyle = '#e74c3c';
-    ctx.textAlign = 'center';
-    ctx.fillText('Today', tx, PAD.top - 6);
-  }
-
-  // Axes
-  ctx.strokeStyle = '#bdc3c7';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(PAD.left, PAD.top);
-  ctx.lineTo(PAD.left, PAD.top + cH);
-  ctx.lineTo(PAD.left + cW, PAD.top + cH);
-  ctx.stroke();
-}
 
 // ── Init ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   initUpload();
   initDepotPanel();
-  window.addEventListener('resize', () => { if (state.allRows.length) applyFilter(); });
+  initBusPanel();
+  window.addEventListener('resize', () => { if (state.allRows.length && !state.selectedBus) applyFilter(); });
 });
 </script>
 </body>
