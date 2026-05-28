@@ -244,7 +244,7 @@ function buildRow(cols) {
 
 // ── Summary Stats ────────────────────────────────────────────────────────────
 function updateSummaryStats(all, insp, svc) {
-  const overdue = all.filter(r => r.diff < 0).length;
+  const overdue = [...insp, ...svc].filter(r => r.diff < 0).length;
   document.getElementById('stat-total').textContent   = all.length;
   document.getElementById('stat-insp').textContent    = insp.length;
   document.getElementById('stat-svc').textContent     = svc.length;
