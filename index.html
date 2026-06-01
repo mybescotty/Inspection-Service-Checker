@@ -126,6 +126,7 @@
     </div>
     <div id="bus-panel">
       <h3>Fleet</h3>
+      <div style="padding:0 8px 6px"><input type="text" id="bus-search" placeholder="Search fleet or reg…" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:4px;font-size:12px;outline:none;color:var(--text-primary)"></div>
       <ul id="bus-list"></ul>
     </div>
   </div>
@@ -298,6 +299,7 @@ function renderBusPanel(filteredRows) {
   const panel = document.getElementById('bus-panel');
   if (state.activeDepot === 'ALL') { panel.style.display = 'none'; return; }
   panel.style.display = 'block';
+  document.getElementById('bus-search').value = '';
   const buses = {};
   filteredRows.forEach(r => {
     if (!buses[r.equipment]) buses[r.equipment] = { reg: r.regPlate, count: 0, hasOverdue: false };
@@ -326,6 +328,12 @@ function initBusPanel() {
     document.querySelectorAll('.bus-item').forEach(el => el.classList.remove('active'));
     item.classList.add('active');
     applyFilter();
+  });
+  document.getElementById('bus-search').addEventListener('input', e => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll('.bus-item').forEach(item => {
+      item.style.display = !q || item.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
   });
   document.getElementById('tl-back-btn').addEventListener('click', () => {
     state.selectedBus = null;
