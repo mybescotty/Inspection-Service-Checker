@@ -355,7 +355,9 @@ function renderTable(container, rows, type) {
     container.innerHTML = '<p class="empty-msg">No ' + (type === 'inspection' ? 'inspection' : 'service') + ' work orders found for this selection.</p>';
     return;
   }
-  const sorted = [...rows].sort((a, b) => a.diff - b.diff);
+  const sorted = [...rows].sort((a, b) =>
+    (+a.depot - +b.depot) || a.depot.localeCompare(b.depot) || a.diff - b.diff
+  );
   const html = ['<table class="wo-table"><thead><tr>',
     '<th>Depot</th><th>Fleet</th><th>Reg</th><th>Description</th><th>Status</th><th>Priority</th><th>Sched. Date</th><th>Days</th>',
     '</tr></thead><tbody>'];
