@@ -345,6 +345,11 @@ function initBusPanel() {
 }
 
 // ── Table Renderer ───────────────────────────────────────────────────────────
+const OV_LABELS = {
+  OV1: 'VOR Awaiting Labour', OV2: 'VOR Awaiting Parts', OV3: 'VOR WIP',
+  OV4: 'VOR Change in Status', OV5: 'Workload balancing', OV6: 'MOT Availability',
+  OV7: 'Extreme Weather Impact', OV8: 'Slip Day'
+};
 function renderTable(container, rows, type) {
   if (!rows.length) {
     container.innerHTML = '<p class="empty-msg">No ' + (type === 'inspection' ? 'inspection' : 'service') + ' work orders found for this selection.</p>';
@@ -360,7 +365,7 @@ function renderTable(container, rows, type) {
     else if (r.diff === 0) { daysText = 'Today';           daysClass = 'days-today'; }
     else                 { daysText = '+' + r.diff + 'd'; daysClass = 'days-future'; }
     const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor">VOR</span> ' : '';
-    const ov  = r.scheduleOverride ? '<span class="priority-ov">' + r.scheduleOverride + '</span> ' : '';
+    const ov  = r.scheduleOverride ? '<span class="priority-ov" title="' + (OV_LABELS[r.scheduleOverride] || r.scheduleOverride) + '">' + r.scheduleOverride + '</span> ' : '';
     html.push('<tr class="' + r.rowClass + '">',
       '<td>' + r.depot + '</td>',
       '<td>' + r.equipment + '</td>',
