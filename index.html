@@ -356,7 +356,7 @@ function renderTable(container, rows, type) {
     return;
   }
   const sorted = [...rows].sort((a, b) =>
-    (+a.depot - +b.depot) || a.depot.localeCompare(b.depot) || a.diff - b.diff
+    a.diff - b.diff || (+a.depot - +b.depot) || a.depot.localeCompare(b.depot)
   );
   const html = ['<table class="wo-table"><thead><tr>',
     '<th>Depot</th><th>Fleet</th><th>Reg</th><th>Description</th><th>Status</th><th>Priority</th><th>Sched. Date</th><th>Days</th>',
