@@ -67,6 +67,7 @@
   .days-today { color: #27ae60; }
   .days-future { color: var(--text-secondary); font-weight: 400; }
   .priority-vor { background: #e74c3c; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+  .priority-ov  { background: #2980b9; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .empty-msg { text-align: center; padding: 28px; color: var(--text-secondary); font-size: 13px; }
   #chart-section { flex-shrink: 0; }
   .chart-card { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 12px 16px 8px; }
@@ -243,7 +244,8 @@ function buildRow(cols) {
     workOrder:   String(cols[5]  || '').trim(),
     description: String(cols[7]  || '').trim(),
     status:      String(cols[8]  || '').trim(),
-    priority:    String(cols[11] || '').trim(),
+    priority:         String(cols[11] || '').trim(),
+    scheduleOverride: String(cols[15] || '').trim(),
     schedDate,
     diff,
     rowClass:    type === 'service' ? getServiceRowClass(diff) : getRowClass(diff),
@@ -358,13 +360,14 @@ function renderTable(container, rows, type) {
     else if (r.diff === 0) { daysText = 'Today';           daysClass = 'days-today'; }
     else                 { daysText = '+' + r.diff + 'd'; daysClass = 'days-future'; }
     const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor">VOR</span> ' : '';
+    const ov  = r.scheduleOverride ? '<span class="priority-ov">' + r.scheduleOverride + '</span> ' : '';
     html.push('<tr class="' + r.rowClass + '">',
       '<td>' + r.depot + '</td>',
       '<td>' + r.equipment + '</td>',
       '<td>' + r.regPlate + '</td>',
       '<td>' + r.description + '</td>',
       '<td>' + r.status + '</td>',
-      '<td>' + vor + r.priority.replace(/x\s*\(vor\)/i,'').trim() + '</td>',
+      '<td>' + vor + ov + r.priority.replace(/x\s*\(vor\)/i,'').trim() + '</td>',
       '<td>' + fmtDate(r.schedDate) + '</td>',
       '<td class="days-col ' + daysClass + '">' + daysText + '</td>',
       '</tr>');
