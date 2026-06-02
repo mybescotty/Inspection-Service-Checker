@@ -69,9 +69,7 @@
   .priority-vor { background: #e74c3c; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .priority-ov  { background: #2980b9; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .empty-msg { text-align: center; padding: 28px; color: var(--text-secondary); font-size: 13px; }
-  .section-header { display: flex; align-items: center; gap: 12px; }
-  .section-header .section-title { flex: 1; margin-bottom: 0; }
-  .section-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .insp-toolbar { display: flex; gap: 8px; margin-bottom: 8px; }
   .toggle-btn { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
   .toggle-btn:hover { background: rgba(52,152,219,0.08); }
   .toggle-btn.active { background: var(--accent); color: #fff; }
@@ -142,12 +140,10 @@
   <main id="content">
     <div id="overview-sections">
       <section id="inspections-section">
-        <div class="section-header">
-          <div class="section-title">Vehicle Inspections</div>
-          <div class="section-actions">
-            <button class="toggle-btn" id="insp-missed-toggle" onclick="toggleMissedOnly()">Missed Only</button>
-            <button class="action-btn" id="insp-email-btn" onclick="emailMissedReport()" style="display:none">&#128231; Email Report</button>
-          </div>
+        <div class="section-title">Vehicle Inspections</div>
+        <div class="insp-toolbar">
+          <button class="toggle-btn" id="insp-missed-toggle" onclick="toggleMissedOnly()">Missed Only</button>
+          <button class="action-btn" id="insp-email-btn" onclick="emailMissedReport()" style="display:none">&#128231; Email Report</button>
         </div>
         <div class="table-card"><div id="inspections-table-wrap"></div></div>
       </section>
