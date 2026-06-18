@@ -687,23 +687,36 @@ function initUpload() {
     const reader = new FileReader();
     reader.onload = ev => {
       const rows = parseCSV(ev.target.result);
-      const headers = rows[0].map(h => h.trim().toLowerCase());
-      const col = name => headers.findIndex(h => h.includes(name));
+      const headers = rows[0].map(h => h.trim().toLowerCase().replace(/[\[\]]/g, ''));
+      const col = function() {
+        for (let a = 0; a < arguments.length; a++) {
+          const idx = headers.findIndex(h => h.includes(arguments[a]));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      };
       const equipIdx = col('equipment');
       const regIdx = headers.findIndex((h, i) => i !== equipIdx && h.includes('equipment'));
       const cm = {
-        opco:             col('opco'),
+        opco:             col('opco', 'company', 'operator'),
         equipment:        equipIdx,
-        depot:            col('depot'),
+        depot:            col('depot', 'location'),
         regPlate:         regIdx >= 0 ? regIdx : -1,
-        description:      col('description'),
+        description:      col('description', 'desc', 'work type', 'type'),
         status:           col('status'),
         priority:         col('priority'),
-        schedStart:       col('sched'),
-        dateCompleted:    col('date completed') >= 0 ? col('date completed') : col('completed'),
-        scheduleOverride: col('schedule override') >= 0 ? col('schedule override') : col('override'),
-        signedDate:       col('signed'),
+        schedStart:       col('sched', 'start date', 'due date'),
+        dateCompleted:    col('date completed', 'completed', 'completion'),
+        scheduleOverride: col('schedule override', 'override'),
+        signedDate:       headers.findIndex(h => /\bsigned\b/.test(h)),
       };
+      console.log('CSV headers:', headers);
+      console.log('Column map:', cm);
+      const missing = Object.entries(cm).filter(([k,v]) => v === -1 && !['regPlate','scheduleOverride','signedDate','dateCompleted'].includes(k)).map(([k]) => k);
+      if (missing.length) {
+        alert('Could not detect columns: ' + missing.join(', ') + '.\n\nHeaders found:\n' + headers.join(', ') + '\n\nPlease check the CSV format.');
+        return;
+      }
       const dataRows = rows.slice(1);
       state.allRows = dataRows.map(r => buildRow(r, cm)).filter(Boolean);
       state.activeDepot = 'ALL';
