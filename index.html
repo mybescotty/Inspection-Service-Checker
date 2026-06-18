@@ -241,7 +241,7 @@ function getServiceRowClass(diff) {
 // ── Build Row (new column mapping) ───────────────────────────────────────────
 // Col: 0=OpCo 1=Equipment 2=Depot 3=Created 4=RegPlate 5=WO_No 6=Sequence
 //      7=Description 8=Status 9=MaintPattern 10=StandardWO 11=Priority
-//      12=OrigPMDue 13=SchedStart 14=DateCompleted
+//      12=OrigPMDue 13=SchedStart 14=DateCompleted 15=ScheduleOverride 16=SignedDate
 function buildRow(cols) {
   if (!cols || cols.length < 14) return null;
   const schedDate = parseFlexDate(cols[13]);
@@ -260,6 +260,8 @@ function buildRow(cols) {
     status:      String(cols[8]  || '').trim(),
     priority:         String(cols[11] || '').trim(),
     scheduleOverride: String(cols[15] || '').trim(),
+    signedDate:       parseFlexDate(cols[16]),
+    dateCompleted:    parseFlexDate(cols[14]),
     schedDate,
     diff,
     rowClass:    type === 'service' ? getServiceRowClass(diff) : getRowClass(diff),
@@ -373,7 +375,7 @@ function renderTable(container, rows, type) {
     a.diff - b.diff || (+a.depot - +b.depot) || a.depot.localeCompare(b.depot)
   );
   const html = ['<table class="wo-table"><thead><tr>',
-    '<th>Depot</th><th>Fleet</th><th>Reg</th><th>Description</th><th>Status</th><th>Priority</th><th>Sched. Date</th><th>Days</th>',
+    '<th>Depot</th><th>Fleet</th><th>Reg</th><th>Description</th><th>Status</th><th>Priority</th><th>Sched. Date</th><th>Signed</th><th>Completed</th><th>Days</th>',
     '</tr></thead><tbody>'];
   sorted.forEach(r => {
     let daysText, daysClass;
@@ -390,6 +392,8 @@ function renderTable(container, rows, type) {
       '<td>' + r.status + '</td>',
       '<td>' + vor + ov + r.priority.replace(/x\s*\(vor\)/i,'').trim() + '</td>',
       '<td>' + fmtDate(r.schedDate) + '</td>',
+      '<td>' + (r.signedDate ? fmtDate(r.signedDate) : '') + '</td>',
+      '<td>' + (r.dateCompleted ? fmtDate(r.dateCompleted) : '') + '</td>',
       '<td class="days-col ' + daysClass + '">' + daysText + '</td>',
       '</tr>');
   });
@@ -406,13 +410,18 @@ function renderTlSection(rows) {
     else if (r.diff === 0) dotClass = 'tl-dot-green';
     else                   dotClass = 'tl-dot-upcoming';
     const next = rows[i + 1];
-    const gap  = next ? Math.abs(Math.round((r.schedDate - next.schedDate) / 86400000)) : null;
+    const dateForGap = r.signedDate || r.schedDate;
+    const nextDateForGap = next ? (next.signedDate || next.schedDate) : null;
+    const gap = nextDateForGap ? Math.abs(Math.round((dateForGap - nextDateForGap) / 86400000)) : null;
     const vor  = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor" style="font-size:10px">VOR</span> ' : '';
     html.push(
       '<div class="tl-event">',
       '  <div class="tl-dot-wrap"><div class="tl-dot ' + dotClass + '"></div>' + (gap !== null ? '<div class="tl-connector"></div>' : '') + '</div>',
       '  <div class="tl-info">',
-      '    <div class="tl-date">' + fmtDate(r.schedDate) + '</div>',
+      '    <div class="tl-date">' + fmtDate(r.schedDate) +
+           (r.signedDate ? ' · <span style="color:#27ae60">Signed ' + fmtDate(r.signedDate) + '</span>' : '') +
+           (r.dateCompleted ? ' · <span style="color:#7f8c8d">Completed ' + fmtDate(r.dateCompleted) + '</span>' : '') +
+           '</div>',
       '    <div class="tl-desc">' + vor + r.description + '</div>',
       '    <div class="tl-meta">Depot ' + r.depot + ' · ' + r.opco +
            ' · ' + r.status +
@@ -432,8 +441,8 @@ function renderBusTimeline(busRows) {
   const depots = [...new Set(busRows.map(r => r.depot))].sort().join(', ');
   document.getElementById('tl-bus-sub').textContent =
     'Depots: ' + depots + ' · ' + busRows.length + ' records';
-  const inspRows = [...busRows].filter(r => r.type === 'inspection').sort((a, b) => b.schedDate - a.schedDate);
-  const svcRows  = [...busRows].filter(r => r.type === 'service').sort((a, b) => b.schedDate - a.schedDate);
+  const inspRows = [...busRows].filter(r => r.type === 'inspection').sort((a, b) => (b.signedDate || b.schedDate) - (a.signedDate || a.schedDate));
+  const svcRows  = [...busRows].filter(r => r.type === 'service').sort((a, b) => (b.signedDate || b.schedDate) - (a.signedDate || a.schedDate));
   let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">';
   html += '<div><div class="section-title" style="margin-bottom:10px">Vehicle Inspections</div>';
   html += inspRows.length ? renderTlSection(inspRows) : '<p class="empty-msg">No inspection records.</p>';
@@ -531,8 +540,15 @@ function applyFilter() {
   const filtered = state.activeDepot === 'ALL'
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
-  const insp = filtered.filter(r => r.type === 'inspection' && !/review complete|cancelled|inspection completed|closed|review comments/i.test(r.status));
-  const svc  = filtered.filter(r => r.type === 'service'    && !/closed|cancelled|review complete|activities completed|review comments/i.test(r.status));
+  function shouldShow(r) {
+    if (/cancelled/i.test(r.status)) return false;
+    if (r.signedDate && r.dateCompleted) {
+      return daysDiff(r.dateCompleted) >= 0;
+    }
+    return true;
+  }
+  const insp = filtered.filter(r => r.type === 'inspection' && shouldShow(r));
+  const svc  = filtered.filter(r => r.type === 'service'    && shouldShow(r));
   renderDepotPanel(state.allRows);
   renderBusPanel(filtered);
   if (state.selectedBus) {
