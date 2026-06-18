@@ -697,12 +697,21 @@ function initUpload() {
       };
       const equipIdx = col('equipment');
       const regIdx = headers.findIndex((h, i) => i !== equipIdx && h.includes('equipment'));
+      const descIdx = (function() {
+        const claimed = [equipIdx, regIdx].filter(i => i >= 0);
+        const terms = ['description', 'desc', 'work type'];
+        for (const term of terms) {
+          const idx = headers.findIndex((h, i) => !claimed.includes(i) && h.includes(term));
+          if (idx >= 0) return idx;
+        }
+        return -1;
+      })();
       const cm = {
         opco:             col('opco', 'company', 'operator'),
         equipment:        equipIdx,
         depot:            col('depot', 'location'),
         regPlate:         regIdx >= 0 ? regIdx : -1,
-        description:      col('description', 'desc', 'work type', 'type'),
+        description:      descIdx,
         status:           col('status'),
         priority:         col('priority'),
         schedStart:       col('sched', 'start date', 'due date'),
@@ -710,8 +719,6 @@ function initUpload() {
         scheduleOverride: col('schedule override', 'override'),
         signedDate:       headers.findIndex(h => /\bsigned\b/.test(h)),
       };
-      console.log('CSV headers:', headers);
-      console.log('Column map:', cm);
       const missing = Object.entries(cm).filter(([k,v]) => v === -1 && !['regPlate','scheduleOverride','signedDate','dateCompleted'].includes(k)).map(([k]) => k);
       if (missing.length) {
         alert('Could not detect columns: ' + missing.join(', ') + '.\n\nHeaders found:\n' + headers.join(', ') + '\n\nPlease check the CSV format.');
