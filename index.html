@@ -409,8 +409,10 @@ function renderTlSection(rows) {
     else if (r.diff === 0) dotClass = 'tl-dot-green';
     else                   dotClass = 'tl-dot-upcoming';
     const next = rows[i + 1];
-    const dateForGap = r.signedDate || r.schedDate;
-    const nextDateForGap = next ? (next.signedDate || next.schedDate) : null;
+    const dateForGap = (r.diff < 0 && r.signedDate) ? r.signedDate : r.schedDate;
+    const nextDateForGap = next
+      ? ((next.diff < 0 && next.signedDate) ? next.signedDate : next.schedDate)
+      : null;
     const gap = nextDateForGap ? Math.abs(Math.round((dateForGap - nextDateForGap) / 86400000)) : null;
     const vor  = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor" style="font-size:10px">VOR</span> ' : '';
     html.push(
@@ -440,8 +442,8 @@ function renderBusTimeline(busRows) {
   const depots = [...new Set(busRows.map(r => r.depot))].sort().join(', ');
   document.getElementById('tl-bus-sub').textContent =
     'Depots: ' + depots + ' · ' + busRows.length + ' records';
-  const inspRows = [...busRows].filter(r => r.type === 'inspection').sort((a, b) => (b.signedDate || b.schedDate) - (a.signedDate || a.schedDate));
-  const svcRows  = [...busRows].filter(r => r.type === 'service').sort((a, b) => (b.signedDate || b.schedDate) - (a.signedDate || a.schedDate));
+  const inspRows = [...busRows].filter(r => r.type === 'inspection').sort((a, b) => b.schedDate - a.schedDate);
+  const svcRows  = [...busRows].filter(r => r.type === 'service').sort((a, b) => b.schedDate - a.schedDate);
   let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">';
   html += '<div><div class="section-title" style="margin-bottom:10px">Vehicle Inspections</div>';
   html += inspRows.length ? renderTlSection(inspRows) : '<p class="empty-msg">No inspection records.</p>';
@@ -541,6 +543,7 @@ function applyFilter() {
     : state.allRows.filter(r => r.depot === state.activeDepot);
   function shouldShow(r) {
     if (/cancelled/i.test(r.status)) return false;
+    if (r.signedDate && r.signedDate.getTime() === r.schedDate.getTime()) return false;
     if (r.signedDate && r.dateCompleted) {
       return daysDiff(r.dateCompleted) >= 0;
     }
