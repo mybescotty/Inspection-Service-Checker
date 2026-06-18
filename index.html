@@ -540,7 +540,7 @@ function applyFilter() {
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
   function shouldShow(r) {
-    if (/cancelled/i.test(r.status)) return false;
+    if (/^a$/i.test(r.status) || /cancelled/i.test(r.status)) return false;
     if (r.signedDate && r.signedDate.getTime() === r.schedDate.getTime()) return false;
     if (r.signedDate && r.dateCompleted) {
       return daysDiff(r.dateCompleted) >= 0;
