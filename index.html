@@ -237,30 +237,28 @@ function getServiceRowClass(diff) {
   return '';
 }
 
-// ── Build Row (new column mapping) ───────────────────────────────────────────
-// Col: 0=OpCo 1=Equipment 2=Depot 3=Created 4=RegPlate 5=WO_No 6=Sequence
-//      7=Description 8=Status 9=MaintPattern 10=StandardWO 11=Priority
-//      12=OrigPMDue 13=SchedStart 14=DateCompleted 15=ScheduleOverride 16=SignedDate
-function buildRow(cols) {
-  if (!cols || cols.length < 14) return null;
-  const schedDate = parseFlexDate(cols[13]);
+// ── Build Row (header-detected column mapping) ──────────────────────────────
+function buildRow(cols, cm) {
+  if (!cols || !cm) return null;
+  const g = i => (i >= 0 && i < cols.length) ? cols[i] : '';
+  const schedDate = parseFlexDate(g(cm.schedStart));
   if (!schedDate) return null;
-  const equipment = String(cols[1] || '').trim();
+  const equipment = String(g(cm.equipment) || '').trim();
   if (!equipment) return null;
   const diff = daysDiff(schedDate);
-  const type = classifyType(cols[7]);
+  const type = classifyType(g(cm.description));
   return {
-    opco:        String(cols[0]  || '').trim(),
-    depot:       String(cols[2]  || '').trim(),
+    opco:             String(g(cm.opco) || '').trim(),
+    depot:            String(g(cm.depot) || '').trim(),
     equipment,
-    regPlate:    String(cols[4]  || '').trim(),
-    workOrder:   String(cols[5]  || '').trim(),
-    description: String(cols[7]  || '').trim(),
-    status:      String(cols[8]  || '').trim(),
-    priority:         String(cols[11] || '').trim(),
-    scheduleOverride: String(cols[15] || '').trim(),
-    signedDate:       parseFlexDate(cols[16]),
-    dateCompleted:    parseFlexDate(cols[14]),
+    regPlate:         String(g(cm.regPlate) || '').trim(),
+    workOrder:        '',
+    description:      String(g(cm.description) || '').trim(),
+    status:           String(g(cm.status) || '').trim(),
+    priority:         String(g(cm.priority) || '').trim(),
+    scheduleOverride: String(g(cm.scheduleOverride) || '').trim(),
+    signedDate:       parseFlexDate(g(cm.signedDate)),
+    dateCompleted:    parseFlexDate(g(cm.dateCompleted)),
     schedDate,
     diff,
     rowClass:    type === 'service' ? getServiceRowClass(diff) : getRowClass(diff),
@@ -689,8 +687,25 @@ function initUpload() {
     const reader = new FileReader();
     reader.onload = ev => {
       const rows = parseCSV(ev.target.result);
+      const headers = rows[0].map(h => h.trim().toLowerCase());
+      const col = name => headers.findIndex(h => h.includes(name));
+      const equipIdx = col('equipment');
+      const regIdx = headers.findIndex((h, i) => i !== equipIdx && h.includes('equipment'));
+      const cm = {
+        opco:             col('opco'),
+        equipment:        equipIdx,
+        depot:            col('depot'),
+        regPlate:         regIdx >= 0 ? regIdx : -1,
+        description:      col('description'),
+        status:           col('status'),
+        priority:         col('priority'),
+        schedStart:       col('sched'),
+        dateCompleted:    col('date completed') >= 0 ? col('date completed') : col('completed'),
+        scheduleOverride: col('schedule override') >= 0 ? col('schedule override') : col('override'),
+        signedDate:       col('signed'),
+      };
       const dataRows = rows.slice(1);
-      state.allRows = dataRows.map(buildRow).filter(Boolean);
+      state.allRows = dataRows.map(r => buildRow(r, cm)).filter(Boolean);
       state.activeDepot = 'ALL';
       state.selectedBus = null;
       document.getElementById('empty-state').style.display = 'none';
