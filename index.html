@@ -6,18 +6,18 @@
 <title>Service &amp; Inspection Tracker</title>
 <style>
   :root {
-    --bg-page: #f4f6f8;
-    --bg-header: #2c3e50;
+    --bg-page: #f5f5f7;
+    --bg-header: #2D2A6E;
     --bg-panel: #ffffff;
-    --accent: #2980b9;
-    --accent-hover: #3498db;
+    --accent: #E5007D;
+    --accent-hover: #C0006A;
     --row-red: rgba(231,76,60,0.12);
     --row-amber: rgba(243,156,18,0.15);
     --row-green: rgba(39,174,96,0.15);
-    --text-primary: #2c3e50;
-    --text-secondary: #7f8c8d;
-    --text-on-dark: #ecf0f1;
-    --border: #dde3ea;
+    --text-primary: #2D2A6E;
+    --text-secondary: #6b6b8a;
+    --text-on-dark: #ffffff;
+    --border: #e0e0ec;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg-page); color: var(--text-primary); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
@@ -37,13 +37,13 @@
   #depot-panel h3, #bus-panel h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); padding: 0 14px 6px; }
   #depot-list, #bus-list { list-style: none; }
   .depot-item { display: flex; justify-content: space-between; align-items: center; padding: 7px 14px; cursor: pointer; font-size: 13px; border-radius: 0 20px 20px 0; margin-right: 8px; transition: background 0.15s; }
-  .depot-item:hover { background: #eaf3fb; }
+  .depot-item:hover { background: rgba(229,0,125,0.08); }
   .depot-item.active { background: var(--accent); color: #fff; }
   .depot-badge { font-size: 11px; background: rgba(0,0,0,0.12); border-radius: 10px; padding: 1px 7px; min-width: 22px; text-align: center; }
   .depot-item.active .depot-badge { background: rgba(255,255,255,0.25); }
   #bus-panel { flex: 1; overflow-y: auto; border-top: 1px solid var(--border); padding-top: 6px; display: none; }
   .bus-item { display: flex; justify-content: space-between; align-items: center; padding: 6px 14px 6px 12px; cursor: pointer; font-size: 12px; border-radius: 0 16px 16px 0; margin-right: 8px; transition: background 0.15s; gap: 6px; }
-  .bus-item:hover { background: #eaf3fb; }
+  .bus-item:hover { background: rgba(229,0,125,0.08); }
   .bus-item.active { background: var(--accent); color: #fff; }
   .bus-item .bus-num { font-weight: 600; font-size: 12px; }
   .bus-item .bus-reg { font-size: 10px; opacity: 0.7; }
@@ -55,7 +55,7 @@
   .section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   .table-card { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); overflow: hidden; }
   .wo-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .wo-table th { background: #34495e; color: var(--text-on-dark); padding: 8px 10px; text-align: left; font-size: 12px; white-space: nowrap; }
+  .wo-table th { background: var(--bg-header); color: var(--text-on-dark); padding: 8px 10px; text-align: left; font-size: 12px; white-space: nowrap; }
   .wo-table td { padding: 7px 10px; border-bottom: 1px solid #eaecef; white-space: nowrap; }
   .wo-table tr:last-child td { border-bottom: none; }
   .wo-table tbody tr:hover td { filter: brightness(0.96); }
@@ -69,11 +69,11 @@
   .days-today { color: #27ae60; }
   .days-future { color: var(--text-secondary); font-weight: 400; }
   .priority-vor { background: #e74c3c; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
-  .priority-ov  { background: #2980b9; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+  .priority-ov  { background: #2D2A6E; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .empty-msg { text-align: center; padding: 28px; color: var(--text-secondary); font-size: 13px; }
   .insp-toolbar { display: flex; gap: 8px; margin-bottom: 8px; }
   .toggle-btn { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
-  .toggle-btn:hover { background: rgba(52,152,219,0.08); }
+  .toggle-btn:hover { background: rgba(229,0,125,0.08); }
   .toggle-btn.active { background: var(--accent); color: #fff; }
   .action-btn { background: #27ae60; color: #fff; border: none; border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
   .action-btn:hover { background: #219a52; }
@@ -84,7 +84,7 @@
   #bus-timeline { display: none; flex-direction: column; gap: 0; }
   .tl-header { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 14px 18px; display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
   .tl-back { background: none; border: 1px solid var(--border); border-radius: 5px; padding: 5px 12px; font-size: 13px; cursor: pointer; color: var(--text-primary); }
-  .tl-back:hover { background: #eaf3fb; }
+  .tl-back:hover { background: rgba(229,0,125,0.08); }
   .tl-bus-title { font-size: 17px; font-weight: 700; }
   .tl-bus-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
   .tl-body { background: var(--bg-panel); border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 16px 20px; }
@@ -92,7 +92,7 @@
   .tl-dot-wrap { display: flex; flex-direction: column; align-items: center; }
   .tl-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
   .tl-dot-done     { background: #95a5a6; }
-  .tl-dot-upcoming { background: #3498db; }
+  .tl-dot-upcoming { background: #E5007D; }
   .tl-dot-amber    { background: #f39c12; }
   .tl-dot-red      { background: #e74c3c; }
   .tl-dot-green    { background: #27ae60; }
@@ -115,7 +115,10 @@
 </head>
 <body>
 <header>
-  <h1>🔧 Service &amp; Inspection Tracker</h1>
+  <div>
+    <h1>🔧 Service &amp; Inspection Tracker</h1>
+    <div style="font-size:10px;opacity:0.55;letter-spacing:0.05em;margin-top:2px">Designed by First Bus Franchise · Engineering</div>
+  </div>
   <label class="upload-btn" for="csv-input">📂 Upload CSV</label>
   <input type="file" id="csv-input" accept=".csv,.txt">
   <div class="stats-bar" id="stats-bar" style="display:none">
@@ -162,7 +165,7 @@
         <div class="chart-card">
           <canvas id="workload-chart" height="240"></canvas>
           <div class="legend">
-            <div class="legend-item"><div class="legend-swatch" style="background:#3498db"></div>Inspections</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:#E5007D"></div>Inspections</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#e67e22"></div>Services</div>
             <div class="legend-item"><div class="legend-swatch" style="background:#e74c3c;width:3px;border-radius:0"></div>Today</div>
           </div>
@@ -676,7 +679,7 @@ function renderChart(insp, svc) {
     const xS = xGroup + groupW / 2 + gap / 2;
     const hI = (counts[k].i / (yTicks * step)) * cH;
     const hS = (counts[k].s / (yTicks * step)) * cH;
-    if (hI > 0) { ctx.fillStyle = '#3498db'; ctx.fillRect(xI, PAD.top + cH - hI, barW, hI); }
+    if (hI > 0) { ctx.fillStyle = '#E5007D'; ctx.fillRect(xI, PAD.top + cH - hI, barW, hI); }
     if (hS > 0) { ctx.fillStyle = '#e67e22'; ctx.fillRect(xS, PAD.top + cH - hS, barW, hS); }
     ctx.font = '10px system-ui'; ctx.textAlign = 'center';
     if (counts[k].i > 0) { ctx.fillStyle = '#2980b9'; ctx.fillText(counts[k].i, xI + barW/2, PAD.top + cH - hI - 3); }
