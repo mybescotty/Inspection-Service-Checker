@@ -111,6 +111,10 @@
   .legend { display: flex; gap: 16px; justify-content: flex-end; font-size: 12px; margin-top: 4px; }
   .legend-item { display: flex; align-items: center; gap: 5px; }
   .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
+  /* ── A/B/C minor service — late (>7 days) ── */
+  .row-minor-late td { background: rgba(229,0,125,0.07); }
+  .row-minor-late td:first-child { border-left: 3px solid var(--accent); padding-left: 7px; }
+  .badge-minor-late { background: var(--accent); color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 10px; font-weight: 600; margin-right: 4px; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -230,6 +234,11 @@ function classifyType(desc) {
   if (d.includes('service'))   return 'service';
   return 'other';
 }
+// Detects A, B or C service descriptions (e.g. "A Service", "B Service", "Service A")
+function isMinorService(desc) {
+  if (!/service/i.test(desc)) return false;
+  return /\b[abc]\b/i.test(desc);
+}
 function getRowClass(diff) {
   if (diff <= -3) return 'row-red';
   if (diff <= -1) return 'row-amber';
@@ -253,6 +262,11 @@ function buildRow(cols, cm) {
   if (!equipment) return null;
   const diff = daysDiff(schedDate);
   const type = classifyType(g(cm.description));
+  const isMinorSvc = type === 'service' && isMinorService(String(g(cm.description) || ''));
+  // A/B/C services get flagged pink after just 7 days late; other services use the normal thresholds
+  const rowClass = type === 'service'
+    ? ((isMinorSvc && diff <= -7) ? 'row-minor-late' : getServiceRowClass(diff))
+    : getRowClass(diff);
   return {
     opco:             String(g(cm.opco) || '').trim(),
     depot:            String(g(cm.depot) || '').trim(),
@@ -267,7 +281,8 @@ function buildRow(cols, cm) {
     dateCompleted:    parseFlexDate(g(cm.dateCompleted)),
     schedDate,
     diff,
-    rowClass:    type === 'service' ? getServiceRowClass(diff) : getRowClass(diff),
+    isMinorSvc,
+    rowClass,
     type
   };
 }
@@ -388,11 +403,14 @@ function renderTable(container, rows, type) {
     const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor">VOR</span> ' : '';
     const ov  = r.scheduleOverride ? '<span class="priority-ov" title="' + (OV_LABELS[r.scheduleOverride] || r.scheduleOverride) + '">' + r.scheduleOverride + '</span> ' : '';
     const mismatch = (r.signedDate && r.signedDate.getTime() !== r.schedDate.getTime()) ? ' date-mismatch' : '';
+    const minorBadge = (r.isMinorSvc && r.diff <= -7)
+      ? '<span class="badge-minor-late" title="A/B/C minor service — over 7 days late">⚠ Minor Late</span>'
+      : '';
     html.push('<tr class="' + r.rowClass + mismatch + '">',
       '<td>' + r.depot + '</td>',
       '<td>' + r.equipment + '</td>',
       '<td>' + r.regPlate + '</td>',
-      '<td>' + r.description + '</td>',
+      '<td>' + minorBadge + r.description + '</td>',
       '<td>' + r.status + '</td>',
       '<td>' + vor + ov + r.priority.replace(/x\s*\(vor\)/i,'').trim() + '</td>',
       '<td>' + fmtDate(r.schedDate) + '</td>',

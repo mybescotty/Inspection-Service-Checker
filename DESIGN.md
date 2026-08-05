@@ -26,8 +26,10 @@ These are kept consistent regardless of brand — they carry functional meaning 
 | Overdue — critical | Red tint row | `rgba(231,76,60,0.12)` |
 | Overdue — warning | Amber tint row | `rgba(243,156,18,0.15)` |
 | On time / today | Green tint row | `rgba(39,174,96,0.15)` |
+| A/B/C minor service >7 days late | Pink tint + pink left border | `rgba(229,0,125,0.07)` + `3px solid #E5007D` |
 | Date mismatch | Orange left border | `4px solid #e67e22` |
 | VOR badge | Red | `#e74c3c` |
+| A/B/C minor late badge | Pink (brand accent) | `#E5007D` |
 | Days overdue text | Red | `#c0392b` |
 | Days today text | Green | `#27ae60` |
 
@@ -176,6 +178,56 @@ Add the standard tagline under the `<h1>`:
 
 /* VOR / alert badge — red */
 .badge-red  { background: #e74c3c; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
+```
+
+---
+
+### A/B/C Minor Service — Late Detection
+
+A, B and C services are minor scheduled maintenance (oil, filters, checks) that keep engines in good condition. Although they are lower severity than a full inspection, they must not slip beyond 7 days without visibility. The tracker flags them separately from the standard overdue thresholds.
+
+**Rule:** if the description contains `service` AND a standalone letter `A`, `B`, or `C`, and the scheduled date is more than 7 days in the past (`diff ≤ −7`), the row receives the `row-minor-late` class and a `⚠ Minor Late` badge.
+
+```css
+/* Row highlight */
+.row-minor-late td { background: rgba(229,0,125,0.07); }
+.row-minor-late td:first-child { border-left: 3px solid var(--accent); padding-left: 7px; }
+
+/* Description badge */
+.badge-minor-late {
+  background: var(--accent);   /* #E5007D */
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-size: 10px;
+  font-weight: 600;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+```
+
+**Detection function (JavaScript):**
+```javascript
+function isMinorService(desc) {
+  if (!/service/i.test(desc)) return false;
+  return /\b[abc]\b/i.test(desc);   // matches "A Service", "B Service", "Service A", etc.
+}
+```
+
+The logic inside `buildRow`:
+```javascript
+const isMinorSvc = type === 'service' && isMinorService(description);
+const rowClass = type === 'service'
+  ? ((isMinorSvc && diff <= -7) ? 'row-minor-late' : getServiceRowClass(diff))
+  : getRowClass(diff);
+```
+
+And in the table renderer, the badge is injected into the description cell:
+```javascript
+const minorBadge = (r.isMinorSvc && r.diff <= -7)
+  ? '<span class="badge-minor-late" title="A/B/C minor service — over 7 days late">⚠ Minor Late</span>'
+  : '';
+html.push('<td>' + minorBadge + r.description + '</td>');
 ```
 
 ---
