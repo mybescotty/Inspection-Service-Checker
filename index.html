@@ -111,10 +111,30 @@
   .legend { display: flex; gap: 16px; justify-content: flex-end; font-size: 12px; margin-top: 4px; }
   .legend-item { display: flex; align-items: center; gap: 5px; }
   .legend-swatch { width: 12px; height: 12px; border-radius: 2px; }
-  /* ── A/B/C minor service — late (>7 days) ── */
+  /* ── A/B/C minor service — late (>7 days, not completed) ── */
   .row-minor-late td { background: rgba(229,0,125,0.07); }
   .row-minor-late td:first-child { border-left: 3px solid var(--accent); padding-left: 7px; }
   .badge-minor-late { background: var(--accent); color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 10px; font-weight: 600; margin-right: 4px; vertical-align: middle; }
+  /* ── Appendix modal ── */
+  #appendix-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; align-items: flex-start; justify-content: center; padding: 24px 16px; overflow-y: auto; }
+  #appendix-overlay.open { display: flex; }
+  #appendix-box { background: #fff; border-radius: 10px; max-width: 780px; width: 100%; padding: 28px 32px; position: relative; box-shadow: 0 8px 32px rgba(0,0,0,0.18); }
+  #appendix-close { position: absolute; top: 14px; right: 16px; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-secondary); line-height: 1; }
+  #appendix-close:hover { color: var(--text-primary); }
+  .ap-h1 { font-size: 19px; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+  .ap-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 24px; line-height: 1.5; }
+  .ap-section { margin-bottom: 22px; }
+  .ap-h2 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-secondary); margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 7px; }
+  .ap-rows { display: flex; flex-direction: column; gap: 7px; }
+  .ap-row { display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; font-size: 13px; line-height: 1.5; }
+  .ap-swatch { width: 16px; height: 16px; border-radius: 3px; margin-top: 2px; }
+  .ap-swatch-border { width: 16px; height: 16px; border-radius: 3px; margin-top: 2px; border-left: 4px solid; }
+  .ap-text b { color: var(--text-primary); }
+  .ap-text { color: #4a4a6a; }
+  .ap-ov-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; font-size: 12px; margin-top: 6px; }
+  .ap-ov-item { display: flex; gap: 6px; align-items: baseline; }
+  .ap-ov-badge { background: var(--bg-header); color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 10px; font-weight: 600; flex-shrink: 0; }
+  .ap-tip { background: rgba(45,42,110,0.05); border-left: 3px solid var(--bg-header); border-radius: 0 4px 4px 0; padding: 8px 12px; font-size: 12px; color: #4a4a6a; margin-top: 8px; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -125,6 +145,7 @@
   </div>
   <label class="upload-btn" for="csv-input">📂 Upload CSV</label>
   <input type="file" id="csv-input" accept=".csv,.txt">
+  <button class="upload-btn" onclick="openAppendix()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3)">📋 Appendix</button>
   <div class="stats-bar" id="stats-bar" style="display:none">
     <div class="stat"><strong id="stat-total">0</strong><span>Total WOs</span></div>
     <div class="stat"><strong id="stat-insp">0</strong><span>Inspections</span></div>
@@ -193,6 +214,120 @@
   <p>Upload a CSV file to view work orders</p>
   <small>Columns: Equipment · Depot · Reg · Description · Status · Sched. Start Date · Date Completed</small>
 </div>
+<!-- ── Appendix Modal ─────────────────────────────────────────────────────── -->
+<div id="appendix-overlay">
+  <div id="appendix-box">
+    <button id="appendix-close" onclick="closeAppendix()" title="Close">✕</button>
+    <div class="ap-h1">📋 Tracker Appendix</div>
+    <div class="ap-subtitle">Everything the tracker does, what each colour means, and why each threshold is set where it is.<br>Built by First Bus Franchise · Engineering.</div>
+
+    <!-- INSPECTIONS -->
+    <div class="ap-section">
+      <div class="ap-h2">🔍 Vehicle Inspections — Row Colours</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(39,174,96,0.3)"></div><div class="ap-text"><b>Green — Due Today</b><br>The inspection is scheduled for today. Acts as a same-day reminder to the workshop.</div></div>
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(243,156,18,0.35)"></div><div class="ap-text"><b>Amber — 1–2 Days Overdue</b><br>A short-slip window. Inspections can drift by a day due to resource pressure; amber gives one working day to recover before escalating.</div></div>
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(231,76,60,0.2)"></div><div class="ap-text"><b>Red — 3+ Days Overdue</b><br>DVSA require inspections to be completed within their scheduled window. Three or more days overdue is a compliance risk and must be investigated immediately.</div></div>
+      </div>
+    </div>
+
+    <!-- SERVICES -->
+    <div class="ap-section">
+      <div class="ap-h2">🔧 Servicing — Row Colours</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(39,174,96,0.3)"></div><div class="ap-text"><b>Green — Due today or within tolerance</b><br>The service is scheduled within the acceptable window (0–14 days past due). Normal scheduling float.</div></div>
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(243,156,18,0.35)"></div><div class="ap-text"><b>Amber — 15–34 Days Overdue</b><br>Service is drifting. Major services are resource-intensive and some slippage is expected, but 15+ days warrants active planning.</div></div>
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(231,76,60,0.2)"></div><div class="ap-text"><b>Red — 35+ Days Overdue</b><br>Significant overdue. At this point the vehicle's service record is outside any reasonable tolerance and must be escalated to Engineering management.</div></div>
+      </div>
+    </div>
+
+    <!-- A/B/C MINOR SERVICES -->
+    <div class="ap-section">
+      <div class="ap-h2"><span style="color:var(--accent)">⚠</span> A / B / C Minor Services</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div class="ap-swatch" style="background:rgba(229,0,125,0.12);border-left:3px solid #E5007D"></div><div class="ap-text"><b>Pink border + ⚠ Minor Late badge — 7+ Days Overdue, Not Completed</b><br>A, B and C services are minor scheduled maintenance items — oil level checks, filter inspections, coolant and fluid top-ups. They are quick to perform but are the first line of defence against engine wear.<br><br>Standard service thresholds (15/35 days) are too lenient for these short-cycle tasks. Seven days is used because most A/B/C services are scheduled every 4–6 weeks; slipping a week already represents &gt;15 % of the service interval. The pink colour (First Bus brand accent) is chosen to be visually distinct from amber/red rather than suggesting a severity level — it means <em>action soon, not crisis</em>.<br>The highlight only appears on rows that are <b>not yet completed</b>.</div></div>
+      </div>
+    </div>
+
+    <!-- DATE MISMATCH -->
+    <div class="ap-section">
+      <div class="ap-h2">🟠 Date Mismatch</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div class="ap-swatch-border" style="border-color:#e67e22;background:transparent"></div><div class="ap-text"><b>Orange left border — Signed Date ≠ Scheduled Date</b><br>The date the inspection was signed off differs from the date it was scheduled. This can indicate a paperwork error, a late sign-off, or that the vehicle wasn't inspected on the correct day. The Mismatch Report button (orange, top of inspections table) exports all mismatches from the last 30 days for audit purposes.</div></div>
+      </div>
+    </div>
+
+    <!-- BADGES -->
+    <div class="ap-section">
+      <div class="ap-h2">🏷 Priority Badges</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div style="width:16px;flex-shrink:0;margin-top:2px"><span class="priority-vor" style="font-size:10px">VOR</span></div><div class="ap-text"><b>VOR — Vehicle Off Road</b><br>The vehicle is unavailable (awaiting parts, labour, MOT, etc.). VOR vehicles are automatically excluded from the Missed Only inspection report to prevent false alarms — you can't inspect a vehicle that isn't there.</div></div>
+        <div class="ap-row"><div style="width:16px;flex-shrink:0;margin-top:2px"><span class="priority-ov" style="font-size:10px">OV</span></div><div class="ap-text"><b>OV — Schedule Override</b><br>A formal reason code explaining why a work order has been deferred. Hover over the badge to see the full description. Override codes ensure all schedule changes are documented and auditable.</div></div>
+      </div>
+      <div class="ap-ov-grid">
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV1</span>VOR Awaiting Labour</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV2</span>VOR Awaiting Parts</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV3</span>VOR WIP</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV4</span>VOR Change in Status</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV5</span>Workload Balancing</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV6</span>MOT Availability</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV7</span>Extreme Weather Impact</div>
+        <div class="ap-ov-item"><span class="ap-ov-badge">OV8</span>Slip Day</div>
+      </div>
+    </div>
+
+    <!-- FILTERS & REPORTS -->
+    <div class="ap-section">
+      <div class="ap-h2">🔎 Filters &amp; Reports</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Missed Only (Inspections)</b> — filters the inspection table to show only overdue rows where the vehicle is not VOR. An Email Report button appears; clicking it drafts a plain-text email you can send straight to the depot team for the daily stand-up.</div></div>
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Overdue Services</b> — filters the servicing table to show only services more than 14 days past their scheduled date. The 14-day threshold separates normal scheduling float from genuinely overdue work. An Email Report button appears when the filter is active.</div></div>
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Mismatch Report</b> (orange button) — scans the last 30 days of inspections for signed date vs. scheduled date discrepancies and generates a plain-text audit email. Use this for compliance reviews or DVSA preparation.</div></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR & TIMELINE -->
+    <div class="ap-section">
+      <div class="ap-h2">🗂 Depot Sidebar &amp; Fleet Timeline</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Depots panel</b> — lists all depots found in the CSV with a count of active work orders. Clicking a depot filters all tables and the chart to that depot only. <em>All Depots</em> resets the view.</div></div>
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Fleet panel</b> — appears when a depot is selected. Lists every vehicle in that depot. A red dot next to a fleet number means that vehicle has at least one overdue item. Use the search box to jump straight to a fleet number or registration.</div></div>
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Bus Timeline</b> — click any fleet number to open a full service and inspection history for that vehicle, ordered newest-first with gap labels between events. Useful for MOT preparation, pre-sale checks, or investigating a vehicle's recent maintenance pattern. Click ← Back to return to the depot view.</div></div>
+      </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="ap-section">
+      <div class="ap-h2">📊 Daily Workload Chart</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text">Shows how many inspections (pink bars) and services (orange bars) are scheduled on each day across the data range. The red dashed line marks today. Use this to identify busy periods and plan workshop resource in advance — a spike next Tuesday means labour needs to be confirmed now.</div></div>
+      </div>
+      <div class="ap-tip">The chart responds to the depot filter — selecting a depot shows workload for that site only.</div>
+    </div>
+
+    <!-- CSV FORMAT -->
+    <div class="ap-section">
+      <div class="ap-h2">📄 CSV Column Guide</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text">The tracker auto-detects column names — exact headings are flexible as long as they contain these keywords:<br><br>
+          <span style="font-size:12px;display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin-top:4px">
+            <span><b>equipment</b> — fleet number</span>
+            <span><b>depot</b> or <em>location</em> — depot name/code</span>
+            <span><b>description</b> — work type (drives inspection vs service split)</span>
+            <span><b>status</b> — current WO status</span>
+            <span><b>sched</b> / <em>start date</em> — scheduled date</span>
+            <span><b>signed</b> — date inspection was signed off</span>
+            <span><b>date completed</b> — date work was completed</span>
+            <span><b>priority</b> — VOR / OV codes live here</span>
+          </span>
+        </div></div>
+      </div>
+      <div class="ap-tip">Rows with no valid scheduled date, no fleet number, or a status of <em>Cancelled</em> / <em>A</em> are automatically excluded from all views.</div>
+    </div>
+
+  </div><!-- /#appendix-box -->
+</div><!-- /#appendix-overlay -->
+
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
 const TODAY = new Date(new Date().toDateString());
@@ -260,12 +395,15 @@ function buildRow(cols, cm) {
   if (!schedDate) return null;
   const equipment = String(g(cm.equipment) || '').trim();
   if (!equipment) return null;
-  const diff = daysDiff(schedDate);
-  const type = classifyType(g(cm.description));
-  const isMinorSvc = type === 'service' && isMinorService(String(g(cm.description) || ''));
-  // A/B/C services get flagged pink after just 7 days late; other services use the normal thresholds
+  const diff         = daysDiff(schedDate);
+  const type         = classifyType(g(cm.description));
+  const dateCompleted = parseFlexDate(g(cm.dateCompleted));
+  // Item is considered completed if it has a dateCompleted in the past
+  const isCompleted  = !!(dateCompleted && daysDiff(dateCompleted) < 0);
+  const isMinorSvc   = type === 'service' && isMinorService(String(g(cm.description) || ''));
+  // A/B/C services get flagged pink after 7 days late ONLY if not yet completed
   const rowClass = type === 'service'
-    ? ((isMinorSvc && diff <= -7) ? 'row-minor-late' : getServiceRowClass(diff))
+    ? ((isMinorSvc && diff <= -7 && !isCompleted) ? 'row-minor-late' : getServiceRowClass(diff))
     : getRowClass(diff);
   return {
     opco:             String(g(cm.opco) || '').trim(),
@@ -278,10 +416,11 @@ function buildRow(cols, cm) {
     priority:         String(g(cm.priority) || '').trim(),
     scheduleOverride: String(g(cm.scheduleOverride) || '').trim(),
     signedDate:       parseFlexDate(g(cm.signedDate)),
-    dateCompleted:    parseFlexDate(g(cm.dateCompleted)),
+    dateCompleted,
     schedDate,
     diff,
     isMinorSvc,
+    isCompleted,
     rowClass,
     type
   };
@@ -403,8 +542,8 @@ function renderTable(container, rows, type) {
     const vor = r.priority.toUpperCase().includes('VOR') ? '<span class="priority-vor">VOR</span> ' : '';
     const ov  = r.scheduleOverride ? '<span class="priority-ov" title="' + (OV_LABELS[r.scheduleOverride] || r.scheduleOverride) + '">' + r.scheduleOverride + '</span> ' : '';
     const mismatch = (r.signedDate && r.signedDate.getTime() !== r.schedDate.getTime()) ? ' date-mismatch' : '';
-    const minorBadge = (r.isMinorSvc && r.diff <= -7)
-      ? '<span class="badge-minor-late" title="A/B/C minor service — over 7 days late">⚠ Minor Late</span>'
+    const minorBadge = (r.isMinorSvc && r.diff <= -7 && !r.isCompleted)
+      ? '<span class="badge-minor-late" title="A/B/C minor service — over 7 days late, not yet completed">⚠ Minor Late</span>'
       : '';
     html.push('<tr class="' + r.rowClass + mismatch + '">',
       '<td>' + r.depot + '</td>',
@@ -812,7 +951,15 @@ document.addEventListener('DOMContentLoaded', () => {
   initDepotPanel();
   initBusPanel();
   window.addEventListener('resize', () => { if (state.allRows.length && !state.selectedBus) applyFilter(); });
+  // Close appendix when clicking outside the box
+  document.getElementById('appendix-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('appendix-overlay')) closeAppendix();
+  });
 });
+
+// ── Appendix Modal ───────────────────────────────────────────────────────────
+function openAppendix()  { document.getElementById('appendix-overlay').classList.add('open'); }
+function closeAppendix() { document.getElementById('appendix-overlay').classList.remove('open'); }
 </script>
 </body>
 </html>
