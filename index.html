@@ -281,7 +281,7 @@
       <div class="ap-h2">🔎 Filters &amp; Reports</div>
       <div class="ap-rows">
         <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Missed Only (Inspections)</b> — filters the inspection table to show only overdue rows where the vehicle is not VOR. An Email Report button appears; clicking it drafts a plain-text email you can send straight to the depot team for the daily stand-up.</div></div>
-        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Overdue Services</b> — filters the servicing table to show only services more than 14 days past their scheduled date. The 14-day threshold separates normal scheduling float from genuinely overdue work. An Email Report button appears when the filter is active.</div></div>
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Overdue Services</b> — filters the servicing table to show services that are genuinely overdue: standard services more than 14 days past their scheduled date, <em>and</em> A/B/C minor services more than 7 days past their scheduled date (reflecting their tighter maintenance cycle). The 14-day threshold separates normal scheduling float from genuinely overdue major work. An Email Report button appears when the filter is active.</div></div>
         <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>Mismatch Report</b> (orange button) — scans the last 30 days of inspections for signed date vs. scheduled date discrepancies and generates a plain-text audit email. Use this for compliance reviews or DVSA preparation.</div></div>
       </div>
     </div>
@@ -721,7 +721,7 @@ function emailSvcReport() {
   const lines = [
     'OVERDUE SERVICES REPORT',
     depot + '  |  Generated: ' + today,
-    rows.length + ' service(s) more than 14 days overdue',
+    rows.length + ' service(s) overdue (standard >14d; A/B/C minor services >7d)',
     '',
     'Depot    Fleet    Reg          Description                    Status          Sched. Date  Days',
     '─'.repeat(96),
@@ -776,7 +776,7 @@ function applyFilter() {
     state.missedInsp = displayInsp;
     document.getElementById('insp-email-btn').style.display = state.inspMissedOnly ? '' : 'none';
     const displaySvc = state.svcOverdueOnly
-      ? svc.filter(r => r.diff < -14)
+      ? svc.filter(r => r.diff < -14 || (r.isMinorSvc && r.diff <= -7 && !r.isCompleted))
       : svc;
     state.overdueSvc = displaySvc;
     document.getElementById('svc-email-btn').style.display = state.svcOverdueOnly ? '' : 'none';
