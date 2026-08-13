@@ -398,8 +398,10 @@ function buildRow(cols, cm) {
   const diff         = daysDiff(schedDate);
   const type         = classifyType(g(cm.description));
   const dateCompleted = parseFlexDate(g(cm.dateCompleted));
-  // Item is considered completed if it has a dateCompleted in the past
-  const isCompleted  = !!(dateCompleted && daysDiff(dateCompleted) < 0);
+  const status        = String(g(cm.status) || '').trim();
+  // Completed = dateCompleted in the past OR status is explicitly "Closed"
+  const isCompleted  = !!(dateCompleted && daysDiff(dateCompleted) < 0)
+                       || /^closed$/i.test(status);
   const isMinorSvc   = type === 'service' && isMinorService(String(g(cm.description) || ''));
   // A/B/C services get flagged pink after 7 days late ONLY if not yet completed
   const rowClass = type === 'service'
@@ -412,7 +414,7 @@ function buildRow(cols, cm) {
     regPlate:         String(g(cm.regPlate) || '').trim(),
     workOrder:        '',
     description:      String(g(cm.description) || '').trim(),
-    status:           String(g(cm.status) || '').trim(),
+    status,
     priority:         String(g(cm.priority) || '').trim(),
     scheduleOverride: String(g(cm.scheduleOverride) || '').trim(),
     signedDate:       parseFlexDate(g(cm.signedDate)),
@@ -749,7 +751,7 @@ function applyFilter() {
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
   function shouldShow(r) {
-    if (/^a$/i.test(r.status) || /cancelled/i.test(r.status)) return false;
+    if (/^a$/i.test(r.status) || /cancelled/i.test(r.status) || /^closed$/i.test(r.status)) return false;
     if (r.signedDate && r.signedDate.getTime() === r.schedDate.getTime()) return false;
     if (r.signedDate && r.dateCompleted) {
       return daysDiff(r.dateCompleted) >= 0;
