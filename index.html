@@ -71,7 +71,8 @@
   .priority-vor { background: #e74c3c; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .priority-ov  { background: #2D2A6E; color: #fff; border-radius: 3px; padding: 1px 5px; font-size: 11px; }
   .empty-msg { text-align: center; padding: 28px; color: var(--text-secondary); font-size: 13px; }
-  .insp-toolbar { display: flex; gap: 8px; margin-bottom: 8px; }
+  .insp-toolbar { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+  .xvor-opt { font-size: 12px; color: var(--text-secondary); display: flex; align-items: center; gap: 4px; cursor: pointer; }
   .toggle-btn { background: none; border: 1px solid var(--accent); color: var(--accent); border-radius: 5px; padding: 4px 12px; font-size: 12px; cursor: pointer; }
   .toggle-btn:hover { background: rgba(229,0,125,0.08); }
   .toggle-btn.active { background: var(--accent); color: #fff; }
@@ -172,8 +173,11 @@
         <div class="section-title">Vehicle Inspections</div>
         <div class="insp-toolbar">
           <button class="toggle-btn" id="insp-missed-toggle" onclick="toggleMissedOnly()">Missed Only</button>
+          <button class="toggle-btn xvor-toggle" onclick="toggleXvor()" title="Show or hide XVOR-tagged work orders">XVOR: Shown</button>
           <button class="action-btn" id="insp-email-btn" onclick="emailMissedReport()" style="display:none">&#128231; Email Report</button>
+          <label class="xvor-opt" id="insp-xvor-opt" style="display:none"><input type="checkbox" id="insp-xvor-inc"> Include XVOR</label>
           <button class="action-btn" id="insp-mismatch-btn" onclick="emailMismatchReport()" style="background:#e67e22">&#128203; Mismatch Report</button>
+          <label class="xvor-opt"><input type="checkbox" id="mismatch-xvor-inc"> Include XVOR</label>
         </div>
         <div class="table-card"><div id="inspections-table-wrap"></div></div>
       </section>
@@ -181,7 +185,9 @@
         <div class="section-title">Servicing</div>
         <div class="insp-toolbar">
           <button class="toggle-btn" id="svc-overdue-toggle" onclick="toggleSvcOverdue()">Overdue Services</button>
+          <button class="toggle-btn xvor-toggle" onclick="toggleXvor()" title="Show or hide XVOR-tagged work orders">XVOR: Shown</button>
           <button class="action-btn" id="svc-email-btn" onclick="emailSvcReport()" style="display:none">&#128231; Email Report</button>
+          <label class="xvor-opt" id="svc-xvor-opt" style="display:none"><input type="checkbox" id="svc-xvor-inc"> Include XVOR</label>
         </div>
         <div class="table-card"><div id="servicing-table-wrap"></div></div>
       </section>
@@ -276,6 +282,14 @@
       </div>
     </div>
 
+    <!-- XVOR -->
+    <div class="ap-section">
+      <div class="ap-h2">🚫 XVOR Work Orders</div>
+      <div class="ap-rows">
+        <div class="ap-row"><div style="width:16px;flex-shrink:0"></div><div class="ap-text"><b>XVOR — cannot be held responsible</b><br>A work order tagged <b>XVOR</b> in the Priority column is for a vehicle that was off the road, so the depot cannot be held responsible for a missed inspection or service on it.<br><br><b>XVOR: Shown / Hidden</b> button (inspections and servicing toolbars, one shared setting) — hides XVOR rows from the tables, header counts, workload chart and the Missed Only / Overdue Services filters.<br><b>Include XVOR</b> tick box next to each report button — reports <em>exclude</em> XVOR by default; tick it to include them. Each report states whether XVOR was included.</div></div>
+      </div>
+    </div>
+
     <!-- FILTERS & REPORTS -->
     <div class="ap-section">
       <div class="ap-h2">🔎 Filters &amp; Reports</div>
@@ -331,7 +345,7 @@
 <script>
 // ── State ────────────────────────────────────────────────────────────────────
 const TODAY = new Date(new Date().toDateString());
-const state = { allRows: [], activeDepot: 'ALL', selectedBus: null, inspMissedOnly: false, missedInsp: [], svcOverdueOnly: false, overdueSvc: [] };
+const state = { allRows: [], activeDepot: 'ALL', selectedBus: null, inspMissedOnly: false, missedInsp: [], svcOverdueOnly: false, overdueSvc: [], hideXvor: false, missedInspAll: [], overdueSvcAll: [] };
 // ── Date Utilities ───────────────────────────────────────────────────────────
 function parseDMY(s) {
   if (!s) return null;
@@ -423,6 +437,7 @@ function buildRow(cols, cm) {
     diff,
     isMinorSvc,
     isCompleted,
+    isXvor: /x\s*\(?\s*vor\s*\)?/i.test(String(g(cm.priority) || '')),
     rowClass,
     type
   };
@@ -626,16 +641,25 @@ function toggleMissedOnly() {
   btn.textContent = state.inspMissedOnly ? 'Show All' : 'Missed Only';
   applyFilter();
 }
+function toggleXvor() {
+  state.hideXvor = !state.hideXvor;
+  document.querySelectorAll('.xvor-toggle').forEach(b => {
+    b.classList.toggle('active', state.hideXvor);
+    b.textContent = state.hideXvor ? 'XVOR: Hidden' : 'XVOR: Shown';
+  });
+  applyFilter();
+}
 function emailMissedReport() {
-  const rows = state.missedInsp;
-  if (!rows.length) return;
+  const incX = document.getElementById('insp-xvor-inc').checked;
+  const rows = state.missedInspAll.filter(r => incX || !r.isXvor);
+  if (!rows.length) { alert('No missed inspections to report' + (incX ? '.' : ' (XVOR excluded).')); return; }
   const today = new Date().toLocaleDateString('en-GB');
   const depot = state.activeDepot === 'ALL' ? 'All Depots' : 'Depot ' + state.activeDepot;
   const subject = 'Missed Inspections Report – ' + depot + ' – ' + today;
   const lines = [
     'MISSED INSPECTIONS REPORT',
     depot + '  |  Generated: ' + today,
-    rows.length + ' inspection(s) overdue (VOR excluded)',
+    rows.length + ' inspection(s) overdue (VOR excluded; XVOR ' + (incX ? 'included' : 'excluded') + ')',
     '',
     'Depot    Fleet    Reg          Description                    Status          Sched. Date  Days',
     '─'.repeat(96),
@@ -664,8 +688,10 @@ function emailMismatchReport() {
   const filtered = state.activeDepot === 'ALL'
     ? state.allRows
     : state.allRows.filter(r => r.depot === state.activeDepot);
+  const incX = document.getElementById('mismatch-xvor-inc').checked;
   const rows = filtered.filter(r =>
     r.type === 'inspection' &&
+    (incX || !r.isXvor) &&
     r.schedDate >= thirtyDaysAgo &&
     r.schedDate <= TODAY &&
     r.signedDate &&
@@ -678,7 +704,7 @@ function emailMismatchReport() {
   const lines = [
     'INSPECTION DATE MISMATCH REPORT',
     depot + '  |  Last 30 Days  |  Generated: ' + today,
-    rows.length + ' inspection(s) with date mismatch',
+    rows.length + ' inspection(s) with date mismatch (XVOR ' + (incX ? 'included' : 'excluded') + ')',
     '',
     'Depot    Fleet    Reg          Description                    Sched. Date  Signed Date  Diff',
     '─'.repeat(100),
@@ -713,15 +739,16 @@ function toggleSvcOverdue() {
   applyFilter();
 }
 function emailSvcReport() {
-  const rows = state.overdueSvc;
-  if (!rows.length) return;
+  const incX = document.getElementById('svc-xvor-inc').checked;
+  const rows = state.overdueSvcAll.filter(r => incX || !r.isXvor);
+  if (!rows.length) { alert('No overdue services to report' + (incX ? '.' : ' (XVOR excluded).')); return; }
   const today = new Date().toLocaleDateString('en-GB');
   const depot = state.activeDepot === 'ALL' ? 'All Depots' : 'Depot ' + state.activeDepot;
   const subject = 'Overdue Services Report – ' + depot + ' – ' + today;
   const lines = [
     'OVERDUE SERVICES REPORT',
     depot + '  |  Generated: ' + today,
-    rows.length + ' service(s) overdue (standard >14d; A/B/C minor services >7d)',
+    rows.length + ' service(s) overdue (standard >14d; A/B/C minor services >7d; XVOR ' + (incX ? 'included' : 'excluded') + ')',
     '',
     'Depot    Fleet    Reg          Description                    Status          Sched. Date  Days',
     '─'.repeat(96),
@@ -758,8 +785,15 @@ function applyFilter() {
     }
     return true;
   }
-  const insp = filtered.filter(r => r.type === 'inspection' && shouldShow(r));
-  const svc  = filtered.filter(r => r.type === 'service'    && shouldShow(r));
+  const inspAll = filtered.filter(r => r.type === 'inspection' && shouldShow(r));
+  const svcAll  = filtered.filter(r => r.type === 'service'    && shouldShow(r));
+  const keep = r => !(state.hideXvor && r.isXvor);
+  const insp = inspAll.filter(keep);
+  const svc  = svcAll.filter(keep);
+  const isPlainVor = r => r.priority.toUpperCase().includes('VOR') && !r.isXvor;
+  const isSvcOverdue = r => r.diff < -14 || (r.isMinorSvc && r.diff <= -7 && !r.isCompleted);
+  state.missedInspAll  = inspAll.filter(r => r.diff < 0 && !isPlainVor(r));
+  state.overdueSvcAll  = svcAll.filter(isSvcOverdue);
   renderDepotPanel(state.allRows);
   renderBusPanel(filtered);
   if (state.selectedBus) {
@@ -771,15 +805,17 @@ function applyFilter() {
     document.getElementById('overview-sections').style.display = 'block';
     document.getElementById('bus-timeline').style.display = 'none';
     const displayInsp = state.inspMissedOnly
-      ? insp.filter(r => r.diff < 0 && !r.priority.toUpperCase().includes('VOR'))
+      ? insp.filter(r => r.diff < 0 && !isPlainVor(r))
       : insp;
     state.missedInsp = displayInsp;
     document.getElementById('insp-email-btn').style.display = state.inspMissedOnly ? '' : 'none';
+    document.getElementById('insp-xvor-opt').style.display = state.inspMissedOnly ? '' : 'none';
     const displaySvc = state.svcOverdueOnly
-      ? svc.filter(r => r.diff < -14 || (r.isMinorSvc && r.diff <= -7 && !r.isCompleted))
+      ? svc.filter(isSvcOverdue)
       : svc;
     state.overdueSvc = displaySvc;
     document.getElementById('svc-email-btn').style.display = state.svcOverdueOnly ? '' : 'none';
+    document.getElementById('svc-xvor-opt').style.display = state.svcOverdueOnly ? '' : 'none';
     renderTable(document.getElementById('inspections-table-wrap'), displayInsp, 'inspection');
     renderTable(document.getElementById('servicing-table-wrap'),   displaySvc,  'service');
     renderChart(insp, svc);
